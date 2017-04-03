@@ -4,26 +4,14 @@ The Grain Size Distribution Tool is a spatially explicit network model that esti
 
 ### What is this repository for? ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+* This program is meant to model the grain size of the substrate in a reach using the equation found in Snyder et al (2013).
+* The tool is currently not finished, and does not run properly. Do not be surprised if it doesn't work yet.
 
 ### How do I get set up? ###
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
-
-### Contribution guidelines ###
-
-* Writing tests
-* Code review
-* Other guidelines
+* As of now, you can't.
 
 ### Who do I talk to? ###
 
-* Repo owner or admin
-* Other community or team contact
+* Braden Anderson
+	banderson1618@gmail.com
