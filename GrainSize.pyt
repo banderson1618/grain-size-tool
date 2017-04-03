@@ -1,18 +1,19 @@
 import arcpy
+import GrainSize
 
 
-class GrainSizeDistribu(object):
+class Toolbox(object):
     def __init__(self):
         """Define the toolbox (the name of the toolbox is the name of the
         .pyt file)."""
-        self.label = "Toolbox"
-        self.alias = ""
+        self.label = "GrainSize"
+        self.alias = "Grain Size Distribution"
 
         # List of tool classes associated with this toolbox
-        self.tools = [Tool]
+        self.tools = [GrainSizeTool]
 
 
-class Tool(object):
+class GrainSizeTool(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
         self.label = "Tool"
@@ -22,7 +23,7 @@ class Tool(object):
     def getParameterInfo(self):
         """Define parameter definitions"""
         param0 = arcpy.Parameter(
-            displayName = "DEM input",
+            displayName = "DEM",
             name = "DEM",
             datatype = "DERasterDataset",
             parameterType = "Required",
@@ -30,10 +31,22 @@ class Tool(object):
             multiValue=False)
 
         param1 = arcpy.Parameter(
-            displayName="Stream Network"
-            name = "StreamNetwork",
-            datatype
-        params = [param0]
+            displayName = "Stream Network",
+            name = "streamNetwork",
+            datatype = "DEFeatureClass",
+            parameterType = "Required",
+            direction = "Input",
+            multiValue=False)
+
+        param2 = arcpy.Parameter(
+            displayName = "Precipitation",
+            name = "precipMap",
+            datatype = "DEFeatureClass",
+            parameterType = "Required",
+            direction = "Input",
+            multiValue=False)
+
+        params = [param0, param1, param2]
         return params
 
     def isLicensed(self):
@@ -53,4 +66,7 @@ class Tool(object):
 
     def execute(self, parameters, messages):
         """The source code of the tool."""
+        GrainSize.main(parameters[0].valueAsText,
+         parameters[1].valueAsText,
+         parameters[2].valueAsText)
         return
