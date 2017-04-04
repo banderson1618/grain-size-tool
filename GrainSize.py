@@ -19,6 +19,8 @@ def main(dem,
     """Source code for our tool"""
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")
+
+    """Testing where the coordinates of the DEM are. Will delete later"""
     demBottom = arcpy.GetRasterProperties_management(dem, "BOTTOM")
     demLeft = arcpy.GetRasterProperties_management(dem, "LEFT")
     demTop = arcpy.GetRasterProperties_management(dem, "TOP")
@@ -29,11 +31,11 @@ def main(dem,
     arcpy.AddMessage(demRight.getOutput(0))
 
     desc = arcpy.Describe(streamNetwork)
-    # reachArray = makeReaches(dem, streamNetwork, precipMap, desc.spatialReference)
+    reachArray = makeReaches(dem, streamNetwork, precipMap, desc.spatialReference)
     arcpy.AddMessage("Reach Array Created.")
 
-    #for i in range(10):
-    #    arcpy.AddMessage(str(reachArray[i].xyPosition))
+    for i in range(10):
+        arcpy.AddMessage(str(reachArray[i].xyPosition))
 
     q_2 = findQ_2()
 
