@@ -16,7 +16,7 @@ class Toolbox(object):
 class GrainSizeTool(object):
     def __init__(self):
         """Define the tool (tool name is the name of the class)."""
-        self.label = "Tool"
+        self.label = "Grain Size Tool"
         self.description = ""
         self.canRunInBackground = False
 
@@ -46,7 +46,15 @@ class GrainSizeTool(object):
             direction = "Input",
             multiValue=False)
 
-        params = [param0, param1, param2]
+        param3 = arcpy.Parameter(
+            displayName = "Projection",
+            name = "projection",
+            datatype = "DEPrjFile",
+            parameterType = "Optional",
+            direction = "Input",
+            multiValue = False)
+
+        params = [param0, param1, param2, param3]
         return params
 
     def isLicensed(self):
@@ -68,5 +76,6 @@ class GrainSizeTool(object):
         """The source code of the tool."""
         GrainSize.main(parameters[0].valueAsText,
          parameters[1].valueAsText,
-         parameters[2].valueAsText)
+         parameters[2].valueAsText,
+         parameters[3].valueAsText)
         return
