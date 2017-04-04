@@ -21,8 +21,10 @@ def main(dem,
 
     reachArray = makeReaches(dem, streamNetwork, precipMap)
 
-    for i in range(10):
-        arcpy.AddMessage(reachArray[i].xyPosition)
+    #for i in range(1, 2880, 2880):
+    #    arcpy.AddMessage(reachArray[i].xyPosition)
+    arcpy.AddMessage(reachArray[0].xyPosition)
+    arcpy.AddMessage(reachArray[2888].xyPosition)
 
     q_2 = findQ_2()
 
@@ -35,6 +37,10 @@ def makeReaches(dem, streamNetwork, precipMap):
     cursor = arcpy.da.InsertCursor(streamNetwork, ['SHAPE@'])
     flowDirection = arcpy.sa.FlowDirection(dem) # Placing this here to pass it to findWidth()
     flowAccumulation = arcpy.sa.FlowAccumulation(flowDirection)
+
+    arcpy.env.workspace = "C:\Users\A02150284\Documents\ArcGIS\TestMapData"
+    arcpy.MakeFeatureLayer_management("NHD_Asotin_all_segmeneted.shp", "polylines_lyr")
+    arcpy.SaveToLayerFile_management("polylines_lyr", "C:\Users\A02150284\Documents\ArcGIS\TestMapData\polylines.lyr")
 
     for polyline in polylineCursor:
         cursor.insertRow([polyline[0]])
