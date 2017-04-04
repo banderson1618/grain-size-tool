@@ -17,19 +17,28 @@ def main(dem,
          precipMap):
     """Source code for our tool"""
     arcpy.env.overwriteOutput = True
+    arcpy.CheckOutExtension("Spatial")
 
     reachArray = makeReaches(dem, streamNetwork, precipMap)
+
+    for i in range(10):
+        arcpy.AddMessage(reachArray[i].xyPosition)
 
     q_2 = findQ_2()
 
 
 def makeReaches(dem, streamNetwork, precipMap):
     """Creates a series of reaches """
+    # TODO: Fix the reach's xy coordinates being wrong
     reaches = []
     polylineCursor = arcpy.da.SearchCursor(streamNetwork, ['SHAPE@', 'SHAPE@XY'])
+    cursor = arcpy.da.InsertCursor(streamNetwork, ['SHAPE@'])
+    flowDirection = arcpy.sa.FlowDirection(dem) # Placing this here to pass it to findWidth()
+    flowAccumulation = arcpy.sa.FlowAccumulation(flowDirection)
 
     for polyline in polylineCursor:
-        width = findWidth(dem, precipMap)
+        cursor.insertRow([polyline[0]])
+        width = findWidth(flowAccumulation, precipMap)
         q_2 = findQ_2()
         reach = Reach(width, q_2, polyline[0], polyline[1])
 
@@ -47,7 +56,7 @@ def findQ_2():
 
 def findWidth(dem, precipMap):
     #TODO: Write findWidth()
-    i = 1  # placeholder
+    i=1
     return i
 
 
