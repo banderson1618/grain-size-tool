@@ -47,14 +47,22 @@ class GrainSizeTool(object):
             multiValue=False)
 
         param3 = arcpy.Parameter(
-            displayName = "Projection",
-            name = "projection",
-            datatype = "DEPrjFile",
-            parameterType = "Optional",
+            displayName = "HUC 10 Boundary",
+            name = "huc10",
+            datatype = "DEFeatureClass",
+            parameterType = "Required",
             direction = "Input",
-            multiValue = False)
+            multiValue=False)
 
-        params = [param0, param1, param2, param3]
+        param4 = arcpy.Parameter(
+            displayName = "Output Files Folder",
+            name = "scratchWorkspace",
+            datatype = "DEFolder",
+            parameterType = "Required",
+            direction = "Input",
+            multiValue=False)
+
+        params = [param0, param1, param2, param3, param4]
         return params
 
     def isLicensed(self):
@@ -77,5 +85,6 @@ class GrainSizeTool(object):
         GrainSize.main(parameters[0].valueAsText,
          parameters[1].valueAsText,
          parameters[2].valueAsText,
-         parameters[3].valueAsText)
+         parameters[3].valueAsText,
+         parameters[4].valueAsText)
         return

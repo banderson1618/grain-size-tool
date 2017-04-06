@@ -10,37 +10,33 @@ Last Update: 4 April 2017
 """
 
 import arcpy
+import os
 from Reach import Reach
+
 
 def main(dem,
          streamNetwork,
          precipMap,
-         projection):
+         huc10,
+         scratch):
     """Source code for our tool"""
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")
 
-    """Testing where the coordinates of the DEM are. Will delete later"""
-    demBottom = arcpy.GetRasterProperties_management(dem, "BOTTOM")
-    demLeft = arcpy.GetRasterProperties_management(dem, "LEFT")
-    demTop = arcpy.GetRasterProperties_management(dem, "TOP")
-    demRight = arcpy.GetRasterProperties_management(dem, "RIGHT")
-    arcpy.AddMessage(demBottom.getOutput(0))
-    arcpy.AddMessage(demLeft.getOutput(0))
-    arcpy.AddMessage(demTop.getOutput(0))
-    arcpy.AddMessage(demRight.getOutput(0))
+    if not os.path.exists(scratch+"\outputData"):
+        os.makedirs(scratch+"\outputData")
+    clippedStreamNetwork = scratch + "\outputData\clippedStreamNetwork.shp"
+    arcpy.AddMessage("Clipping stream network...")
+    arcpy.Clip_analysis(streamNetwork, huc10, clippedStreamNetwork)
 
-    desc = arcpy.Describe(streamNetwork)
-    reachArray = makeReaches(dem, streamNetwork, precipMap, desc.spatialReference)
+    reachArray = makeReaches(dem, clippedStreamNetwork, precipMap)
     arcpy.AddMessage("Reach Array Created.")
 
     for i in range(10):
         arcpy.AddMessage(str(reachArray[i].xyPosition))
 
-    q_2 = findQ_2()
 
-
-def makeReaches(dem, streamNetwork, precipMap, projection):
+def makeReaches(dem, streamNetwork, precipMap):
     """Creates a series of reaches """
     # TODO: Fix the reach's xy coordinates being wrong
     """This commented out code was used to make sure that the layer's data itself wasn't being messed up
@@ -53,7 +49,7 @@ def makeReaches(dem, streamNetwork, precipMap, projection):
     """Goes through every reach in the stream network, calculates its width and Q_2 value, and stores that data in a
     Reach object, which is then placed in an array"""
     reaches = []
-    polylineCursor = arcpy.da.SearchCursor(streamNetwork, ['SHAPE@', 'SHAPE@XY'], "", projection)
+    polylineCursor = arcpy.da.SearchCursor(streamNetwork, ['SHAPE@', 'SHAPE@XY'])
     arcpy.AddMessage("Calculating Drainage Area...")
     flowDirection = arcpy.sa.FlowDirection(dem)
     flowAccumulation = arcpy.sa.FlowAccumulation(flowDirection)  # Calculates the flow accumulation to use in findWidth()
@@ -62,6 +58,7 @@ def makeReaches(dem, streamNetwork, precipMap, projection):
     for polyline in polylineCursor:
         width = findWidth(flowAccumulation, precipMap, polyline[0].firstPoint)
         q_2 = findQ_2()
+        slope = findSlope()
         reach = Reach(width, q_2, polyline[0], polyline[1])
 
         reaches.append(reach)
@@ -81,6 +78,11 @@ def findWidth(dem, precipMap, point):
     #TODO: Write findWidth()
     i = 1  # placeholder
     return i
+
+def findSlope(dem, polyline):
+    """Finds the average slope of the reach in question"""
+    length = polyline.length
+    # startingElevation =
 
 
 if __name__ == '__main__':

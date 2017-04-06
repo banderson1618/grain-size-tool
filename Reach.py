@@ -1,7 +1,6 @@
 class Reach(object):
     def __init__(self, width, q_2, polyline, xyPosition):
         """
-
         :type length: length of the given polyline
         :type xyPosition: The x y position of the centroid of the polyline
         :type width: The average width of the reach
