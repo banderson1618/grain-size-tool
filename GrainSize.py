@@ -25,7 +25,7 @@ def main(dem,
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")
 
-    testing = False
+    testing = True
 
     """Creates the output file, where we'll stash all our results"""
     if not os.path.exists(scratch+"\outputData"):
@@ -35,18 +35,24 @@ def main(dem,
     """Clips our stream network to a HUC10 region"""
     clippedStreamNetwork = scratch + "\clippedStreamNetwork.shp"
     arcpy.AddMessage("Clipping stream network...")
-    arcpy.Clip_analysis(streamNetwork, huc10, clippedStreamNetwork)
+    arcpy.Clip_analysis(streamNetwork, huc10, clippedStreamNetwork)\
 
+    """Makes the reaches"""
     reachArray = makeReaches(testing, dem, clippedStreamNetwork, precipMap, scratch)
-    for i in range(1, 2500, 100):
-        arcpy.AddMessage("Slope: " + str(reachArray[i].slope))
 
+    """Outputs data. Delete in final build"""
+    if testing:
+        arcpy.AddMessage("Width: " + str(reachArray[0].width))
+    else:
+        for i in range(1, 2500, 100):
+            arcpy.AddMessage("Slope: " + str(reachArray[i].slope))
+
+    """Calculates the grain size for the reaches"""
     if not testing:
         for reach in reachArray:
             reach.calculateGrainSize(nValue, t_cValue)
 
     arcpy.AddMessage("Reach Array Created.")
-
 
 
 def makeReaches(testing, dem, streamNetwork, precipMap, scratch):
@@ -62,19 +68,22 @@ def makeReaches(testing, dem, streamNetwork, precipMap, scratch):
     """Goes through every reach in the stream network, calculates its width and Q_2 value, and stores that data in a
     Reach object, which is then placed in an array"""
     reaches = []
-    polylineCursor = arcpy.da.SearchCursor(streamNetwork, ['SHAPE@', 'SHAPE@XY'])
+    polylineCursor = arcpy.da.SearchCursor(streamNetwork, ['SHAPE@'])
     arcpy.AddMessage("Calculating Drainage Area...")
     flowDirection = arcpy.sa.FlowDirection(dem)
     flowAccumulation = arcpy.sa.FlowAccumulation(flowDirection)  # Calculates the flow accumulation to use in findWidth()
+    cellSizeX = arcpy.GetRasterProperties_management(flowAccumulation, "CELLSIZEX")
+    cellSizeY = arcpy.GetRasterProperties_management(flowAccumulation, "CELLSIZEY")
+    cellSize = float(cellSizeX.getOutput(0)) * float(cellSizeY.getOutput(0))
 
     arcpy.AddMessage("Creating Reach Array...")
 
     """If testing, only go through the loop once. Otherwise, go through every reach"""
     if testing:
         polyline = polylineCursor.next()
-        width = findWidth(flowAccumulation, precipMap, polyline[0].firstPoint)
-        q_2 = findQ_2()
         slope = findSlope(dem, polyline, scratch)
+        width = findWidth(flowAccumulation, precipMap, scratch, cellSize)
+        q_2 = findQ_2()
 
         reach = Reach(width, q_2, slope, polyline[0])
 
@@ -82,9 +91,9 @@ def makeReaches(testing, dem, streamNetwork, precipMap, scratch):
 
     else:
         for polyline in polylineCursor:
-            width = findWidth(flowAccumulation, precipMap, polyline[0].firstPoint)
-            q_2 = findQ_2()
             slope = findSlope(dem, polyline, scratch)
+            width = findWidth(flowAccumulation, precipMap, scratch, cellSize)
+            q_2 = findQ_2()
 
             reach = Reach(width, q_2, slope, polyline[0])
 
@@ -103,11 +112,33 @@ def findQ_2():
     return i
 
 
-def findWidth(dem, precipMap, point):
+"""NOTE: To improve efficiency, this function is using a point file created in findSlope(). If findSlope() isn't
+executed in front of findWidth(), or if it no longer needs to create a point, this function will break."""
+def findWidth(flowAccumulation, precipMap, scratch, cellSize):
     """Estimates the width of a reach, based on its drainage area and precipitation levels"""
     #TODO: Write findWidth()
-    i = 1  # placeholder
-    return i
+    arcpy.AddMessage(scratch)
+    pointLayer = scratch + "\point.shp"
+    arcpy.Intersect_analysis([pointLayer, precipMap], "precipPoint")
+    searchCursor = arcpy.da.SearchCursor(scratch + "\precipPoint.shp", "Inches")
+    row = searchCursor.next()
+    precip = row[0]
+    precip *=2.54 # converts to centimeters
+    del row, searchCursor
+
+    pointLayer = scratch+"\pointElevation"
+    arcpy.sa.ExtractValuesToPoints(scratch+"\point.shp", flowAccumulation, scratch + "\\flowPoint")
+    searchCursor = arcpy.da.SearchCursor(scratch + "\\flowPoint.shp", "RASTERVALU")
+    row = searchCursor.next()
+    flowAccAtPoint = row[0]
+    flowAccAtPoint *= cellSize
+    flowAccAtPoint /= 1000000 # converts from square meters to square kilometers
+
+    del row, searchCursor
+
+    width = 0.177 * (flowAccAtPoint ** 0.397) * (precip ** 0.453)
+    return width
+
 
 def findSlope(dem, polyline, scratch):
     """Finds the average slope of the reach in question"""

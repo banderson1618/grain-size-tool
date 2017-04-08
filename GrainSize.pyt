@@ -72,7 +72,7 @@ class GrainSizeTool(object):
 
         param6 = arcpy.Parameter(
             displayName = "t_c Value",
-            name = "givenN",
+            name = "givenT_C",
             datatype = "GPDouble",
             parameterType = "Required",
             direction = "Input",

@@ -13,8 +13,8 @@ class Reach(object):
         self.polyline = polyline
         self.xyPosition = polyline.centroid
 
-    self.grainSize = -1
+    grainSize = -1
 
     def calculateGrainSize(self, n, t_c):
-        self.grainSize = 1.65 * (n**.6) * (q_2**.6) * (w**-.6) * (slope ** .7)
+        self.grainSize = 1.65 * (n**.6) * (self.q_2**.6) * (self.w**-.6) * (self.slope ** .7)
         self.grainSize = self.grainSize / t_c
