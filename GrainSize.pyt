@@ -62,7 +62,23 @@ class GrainSizeTool(object):
             direction = "Input",
             multiValue=False)
 
-        params = [param0, param1, param2, param3, param4]
+        param5 = arcpy.Parameter(
+            displayName = "n Value",
+            name = "givenN",
+            datatype = "GPDouble",
+            parameterType = "Required",
+            direction = "Input",
+            multiValue=False)
+
+        param6 = arcpy.Parameter(
+            displayName = "t_c Value",
+            name = "givenN",
+            datatype = "GPDouble",
+            parameterType = "Required",
+            direction = "Input",
+            multiValue=False)
+
+        params = [param0, param1, param2, param3, param4, param5, param6]
         return params
 
     def isLicensed(self):
@@ -86,5 +102,7 @@ class GrainSizeTool(object):
          parameters[1].valueAsText,
          parameters[2].valueAsText,
          parameters[3].valueAsText,
-         parameters[4].valueAsText)
+         parameters[4].valueAsText,
+         parameters[5].valueAsText,
+         parameters[6].valueAsText)
         return

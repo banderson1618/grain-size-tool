@@ -5,7 +5,7 @@ Purpose: Find the average size of gravel in a stream network
 
 Author: Braden Anderson
 Created: 31 March 2017
-Last Update: 4 April 2017
+Last Update: 7 April 2017
 
 """
 
@@ -18,16 +18,21 @@ def main(dem,
          streamNetwork,
          precipMap,
          huc10,
-         scratch):
+         scratch,
+         nValue,
+         t_cValue):
     """Source code for our tool"""
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")
 
     testing = False
 
+    """Creates the output file, where we'll stash all our results"""
     if not os.path.exists(scratch+"\outputData"):
         os.makedirs(scratch+"\outputData")
     scratch += "\outputData"
+
+    """Clips our stream network to a HUC10 region"""
     clippedStreamNetwork = scratch + "\clippedStreamNetwork.shp"
     arcpy.AddMessage("Clipping stream network...")
     arcpy.Clip_analysis(streamNetwork, huc10, clippedStreamNetwork)
@@ -35,6 +40,11 @@ def main(dem,
     reachArray = makeReaches(testing, dem, clippedStreamNetwork, precipMap, scratch)
     for i in range(1, 2500, 100):
         arcpy.AddMessage("Slope: " + str(reachArray[i].slope))
+
+    if not testing:
+        for reach in reachArray:
+            reach.calculateGrainSize(nValue, t_cValue)
+
     arcpy.AddMessage("Reach Array Created.")
 
 
