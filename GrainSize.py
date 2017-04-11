@@ -5,7 +5,7 @@ Purpose: Find the average size of gravel in a stream network
 
 Author: Braden Anderson
 Created: 31 March 2017
-Last Update: 7 April 2017
+Last Update: 10 April 2017
 
 """
 
@@ -20,12 +20,13 @@ def main(dem,
          huc10,
          scratch,
          nValue,
-         t_cValue):
+         t_cValue,
+         regionNumber):
     """Source code for our tool"""
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")
 
-    testing = True
+    testing = False
 
     """Creates the output file, where we'll stash all our results"""
     if not os.path.exists(scratch+"\outputData"):
@@ -38,26 +39,29 @@ def main(dem,
     arcpy.Clip_analysis(streamNetwork, huc10, clippedStreamNetwork)\
 
     """Makes the reaches"""
-    reachArray = makeReaches(testing, dem, clippedStreamNetwork, precipMap, scratch)
+    reachArray = makeReaches(testing, dem, clippedStreamNetwork, precipMap, regionNumber, scratch)
 
     """Outputs data. Delete in final build"""
     if testing:
-        arcpy.AddMessage("Width: " + str(reachArray[0].width))
+        arcpy.AddMessage("width: " + str(reachArray[0].width))
+        arcpy.AddMessage("Q_2: " + str(reachArray[0].q_2))
+        arcpy.AddMessage("Slope: " + str(reachArray[0].slope))
     else:
         for i in range(1, 2500, 100):
+            arcpy.AddMessage("Width: " + str(reachArray[i].width))
+            arcpy.AddMessage("Q_2: " + str(reachArray[i].q_2))
             arcpy.AddMessage("Slope: " + str(reachArray[i].slope))
 
     """Calculates the grain size for the reaches"""
-    if not testing:
-        for reach in reachArray:
-            reach.calculateGrainSize(nValue, t_cValue)
+    #if not testing:  #not yet, just a reminder that this needs to happen eventually
+        #for reach in reachArray:
+            #reach.calculateGrainSize(nValue, t_cValue)
 
     arcpy.AddMessage("Reach Array Created.")
 
 
-def makeReaches(testing, dem, streamNetwork, precipMap, scratch):
+def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, scratch):
     """Creates a series of reaches """
-    # TODO: Fix the reach's xy coordinates being wrong
     """This commented out code was used to make sure that the layer's data itself wasn't being messed up
     when it entered the program. I'm keeping it around because we'll probably have to save something as a layer
     eventually anyways"""
@@ -75,6 +79,7 @@ def makeReaches(testing, dem, streamNetwork, precipMap, scratch):
     cellSizeX = arcpy.GetRasterProperties_management(flowAccumulation, "CELLSIZEX")
     cellSizeY = arcpy.GetRasterProperties_management(flowAccumulation, "CELLSIZEY")
     cellSize = float(cellSizeX.getOutput(0)) * float(cellSizeY.getOutput(0))
+    numReachesString = str(arcpy.GetCount_management(streamNetwork))
 
     arcpy.AddMessage("Creating Reach Array...")
 
@@ -83,21 +88,26 @@ def makeReaches(testing, dem, streamNetwork, precipMap, scratch):
         polyline = polylineCursor.next()
         slope = findSlope(dem, polyline, scratch)
         width = findWidth(flowAccumulation, precipMap, scratch, cellSize)
-        q_2 = findQ_2()
+        q_2 = findQ_2(flowAccumulation, precipMap, scratch, cellSize, regionNumber)
 
         reach = Reach(width, q_2, slope, polyline[0])
 
         reaches.append(reach)
 
     else:
+        i = 0
         for polyline in polylineCursor:
+
             slope = findSlope(dem, polyline, scratch)
             width = findWidth(flowAccumulation, precipMap, scratch, cellSize)
-            q_2 = findQ_2()
+            q_2 = findQ_2(flowAccumulation, precipMap, scratch, cellSize, regionNumber)
 
             reach = Reach(width, q_2, slope, polyline[0])
 
             reaches.append(reach)
+            i += 1
+            arcpy.AddMessage("Completed Reach " + str(i) + " out of " + numReachesString)
+
 
     del polyline
     del polylineCursor
@@ -105,19 +115,48 @@ def makeReaches(testing, dem, streamNetwork, precipMap, scratch):
     return reaches
 
 
-def findQ_2():
+def findQ_2(flowAccumulation, precipMap, scratch, cellSize, regionNumber):
     """Returns the value of a two year flood event"""
     #TODO: Write findQ_2()
-    i = 1  # placeholder
-    return i
+    searchCursor = arcpy.da.SearchCursor(scratch + "\precipPoint.shp", "Inches")
+    row = searchCursor.next()
+    precip = row[0]
+    del row, searchCursor
+
+    searchCursor = arcpy.da.SearchCursor(scratch + "\\flowPoint.shp", "RASTERVALU")
+    row = searchCursor.next()
+    flowAccAtPoint = row[0]
+    flowAccAtPoint *= cellSize # multiplies by the size of the cell to get area
+    flowAccAtPoint *= 2589988 # converts to square miles, which our formula requires
+    if flowAccAtPoint < 0:
+        flowAccAtPoint = 0
+
+    if regionNumber == 1:
+        q_2 = 0.35 * (flowAccAtPoint**0.923) * (precip ** 1.24)
+    elif regionNumber == 2:
+        q_2 = 0.09 * (flowAccAtPoint**0.877) * (precip ** 1.51)
+    elif regionNumber == 3:
+        q_2 = 0.817 * (flowAccAtPoint**0.877) * (precip ** 1.02)
+    elif regionNumber == 4:
+        q_2 = 0.025 * (flowAccAtPoint**0.880) * (precip ** 1.70)
+    elif regionNumber == 5:
+        q_2 = 14.7 * (flowAccAtPoint**0.815)
+    elif regionNumber == 6:
+        q_2 = 2.24 * (flowAccAtPoint**0.719) * (precip ** 0.833)
+    elif regionNumber == 7:
+        q_2 = 8.77 * (flowAccAtPoint**0.629)
+    elif regionNumber == 8:
+        q_2 = 12.0 * (flowAccAtPoint**0.761)
+    else:
+        q_2 = 0.803 * (flowAccAtPoint**0.672) * (precip ** 1.16)
+
+    return q_2
 
 
 """NOTE: To improve efficiency, this function is using a point file created in findSlope(). If findSlope() isn't
 executed in front of findWidth(), or if it no longer needs to create a point, this function will break."""
 def findWidth(flowAccumulation, precipMap, scratch, cellSize):
     """Estimates the width of a reach, based on its drainage area and precipitation levels"""
-    #TODO: Write findWidth()
-    arcpy.AddMessage(scratch)
     pointLayer = scratch + "\point.shp"
     arcpy.Intersect_analysis([pointLayer, precipMap], "precipPoint")
     searchCursor = arcpy.da.SearchCursor(scratch + "\precipPoint.shp", "Inches")
@@ -126,13 +165,14 @@ def findWidth(flowAccumulation, precipMap, scratch, cellSize):
     precip *=2.54 # converts to centimeters
     del row, searchCursor
 
-    pointLayer = scratch+"\pointElevation"
     arcpy.sa.ExtractValuesToPoints(scratch+"\point.shp", flowAccumulation, scratch + "\\flowPoint")
     searchCursor = arcpy.da.SearchCursor(scratch + "\\flowPoint.shp", "RASTERVALU")
     row = searchCursor.next()
     flowAccAtPoint = row[0]
     flowAccAtPoint *= cellSize
     flowAccAtPoint /= 1000000 # converts from square meters to square kilometers
+    if flowAccAtPoint < 0:
+        flowAccAtPoint = 0
 
     del row, searchCursor
 

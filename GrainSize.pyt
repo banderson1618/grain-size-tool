@@ -78,7 +78,15 @@ class GrainSizeTool(object):
             direction = "Input",
             multiValue=False)
 
-        params = [param0, param1, param2, param3, param4, param5, param6]
+        param7 = arcpy.Parameter(
+            displayName = "Region Number",
+            name = "regionNumber",
+            datatype = "GPLong",
+            parameterType = "Required",
+            direction = "Input",
+            multiValue=False)
+
+        params = [param0, param1, param2, param3, param4, param5, param6, param7]
         return params
 
     def isLicensed(self):
@@ -104,5 +112,6 @@ class GrainSizeTool(object):
          parameters[3].valueAsText,
          parameters[4].valueAsText,
          parameters[5].valueAsText,
-         parameters[6].valueAsText)
+         parameters[6].valueAsText,
+         parameters[7].valueAsText)
         return
