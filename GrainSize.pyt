@@ -111,7 +111,7 @@ class GrainSizeTool(object):
          parameters[2].valueAsText,
          parameters[3].valueAsText,
          parameters[4].valueAsText,
-         parameters[5].valueAsText,
-         parameters[6].valueAsText,
-         parameters[7].valueAsText)
+         parameters[5].value,
+         parameters[6].value,
+         parameters[7].value)
         return

@@ -1,13 +1,12 @@
-"""
-
-Name: Grain Size Distribution Tool
-Purpose: Find the average size of gravel in a stream network
-
-Author: Braden Anderson
-Created: 31 March 2017
-Last Update: 10 April 2017
-
-"""
+########################################################################################################################
+# Name: Grain Size Distribution Tool                                                                                   #
+# Purpose: Find the average size of gravel in a stream network. Because the Q_2 value is localized, this will not work #
+# outside the Columbia River Basin, though modifying findQ_2() for a particular region should be relatively simple.    #
+#                                                                                                                      #
+# Author: Braden Anderson                                                                                              #
+# Created: 31 March 2017                                                                                               #
+# Last Update: 10 April 2017                                                                                           #
+########################################################################################################################
 
 import arcpy
 import os
@@ -26,7 +25,7 @@ def main(dem,
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")
 
-    testing = False
+    testing = True
 
     """Creates the output file, where we'll stash all our results"""
     if not os.path.exists(scratch+"\outputData"):
@@ -39,38 +38,34 @@ def main(dem,
     arcpy.Clip_analysis(streamNetwork, huc10, clippedStreamNetwork)\
 
     """Makes the reaches"""
-    reachArray = makeReaches(testing, dem, clippedStreamNetwork, precipMap, regionNumber, scratch)
+    reachArray = makeReaches(testing, dem, clippedStreamNetwork, precipMap, regionNumber, scratch, nValue, t_cValue)
 
     """Outputs data. Delete in final build"""
     if testing:
-        arcpy.AddMessage("width: " + str(reachArray[0].width))
-        arcpy.AddMessage("Q_2: " + str(reachArray[0].q_2))
-        arcpy.AddMessage("Slope: " + str(reachArray[0].slope))
+        for reach in reachArray:
+            arcpy.AddMessage("Width: " + str(reach.width) + " meters")
+            arcpy.AddMessage("Q_2: " + str(reach.q_2) + " cubic feet per second")
+            arcpy.AddMessage("Slope: " + str(reach.slope))
+            arcpy.AddMessage("Grain Size: " + str(reach.grainSize) + " ")
+            arcpy.AddMessage(" ")
     else:
         for i in range(1, 2500, 100):
             arcpy.AddMessage("Width: " + str(reachArray[i].width))
             arcpy.AddMessage("Q_2: " + str(reachArray[i].q_2))
             arcpy.AddMessage("Slope: " + str(reachArray[i].slope))
+            arcpy.AddMessage("Grain Size: " + str(reachArray[i].grainSize))
+            arcpy.AddMessage(" ")
 
     """Calculates the grain size for the reaches"""
     #if not testing:  #not yet, just a reminder that this needs to happen eventually
         #for reach in reachArray:
             #reach.calculateGrainSize(nValue, t_cValue)
 
-    arcpy.AddMessage("Reach Array Created.")
 
-
-def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, scratch):
-    """Creates a series of reaches """
-    """This commented out code was used to make sure that the layer's data itself wasn't being messed up
-    when it entered the program. I'm keeping it around because we'll probably have to save something as a layer
-    eventually anyways"""
-    # arcpy.env.workspace = "C:\Users\A02150284\Documents\ArcGIS\TestMapData"
-    # arcpy.MakeFeatureLayer_management("NHD_Asotin_all_segmeneted.shp", "polylines_lyr")
-    # arcpy.SaveToLayerFile_management("polylines_lyr", "C:\Users\A02150284\Documents\ArcGIS\TestMapData\polylines.lyr")
-
+def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, scratch, nValue, t_cValue):
     """Goes through every reach in the stream network, calculates its width and Q_2 value, and stores that data in a
     Reach object, which is then placed in an array"""
+
     reaches = []
     polylineCursor = arcpy.da.SearchCursor(streamNetwork, ['SHAPE@'])
     arcpy.AddMessage("Calculating Drainage Area...")
@@ -85,14 +80,18 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, scratch):
 
     """If testing, only go through the loop once. Otherwise, go through every reach"""
     if testing:
-        polyline = polylineCursor.next()
-        slope = findSlope(dem, polyline, scratch)
-        width = findWidth(flowAccumulation, precipMap, scratch, cellSize)
-        q_2 = findQ_2(flowAccumulation, precipMap, scratch, cellSize, regionNumber)
+        for i in range(10):
+            for j in range(10):
+                polyline = polylineCursor.next()
 
-        reach = Reach(width, q_2, slope, polyline[0])
+            slope = findSlope(dem, polyline, scratch)
+            width = findWidth(flowAccumulation, precipMap, scratch, cellSize)
+            q_2 = findQ_2(flowAccumulation, precipMap, scratch, cellSize, regionNumber)
 
-        reaches.append(reach)
+            reach = Reach(width, q_2, slope, polyline[0])
+            reach.calculateGrainSize(nValue, t_cValue)
+
+            reaches.append(reach)
 
     else:
         i = 0
@@ -103,6 +102,7 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, scratch):
             q_2 = findQ_2(flowAccumulation, precipMap, scratch, cellSize, regionNumber)
 
             reach = Reach(width, q_2, slope, polyline[0])
+            reach.calculateGrainSize(nValue, t_cValue)
 
             reaches.append(reach)
             i += 1
@@ -111,6 +111,8 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, scratch):
 
     del polyline
     del polylineCursor
+
+    arcpy.AddMessage("Reach Array Created.")
 
     return reaches
 
@@ -127,7 +129,7 @@ def findQ_2(flowAccumulation, precipMap, scratch, cellSize, regionNumber):
     row = searchCursor.next()
     flowAccAtPoint = row[0]
     flowAccAtPoint *= cellSize # multiplies by the size of the cell to get area
-    flowAccAtPoint *= 2589988 # converts to square miles, which our formula requires
+    flowAccAtPoint /= 2589988 # converts to square miles, which our formula requires
     if flowAccAtPoint < 0:
         flowAccAtPoint = 0
 
@@ -188,7 +190,7 @@ def findSlope(dem, polyline, scratch):
 
     elevationDifference = abs(firstPointElevation - secondPointElevation)
 
-    slope = (elevationDifference/length) * -1
+    slope = elevationDifference/length
 
     return slope
 
