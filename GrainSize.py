@@ -17,7 +17,7 @@ def main(dem,
          streamNetwork,
          precipMap,
          huc10,
-         scratch,
+         outputFolder,
          nValue,
          t_cValue,
          regionNumber):
@@ -28,41 +28,29 @@ def main(dem,
     testing = True
 
     """Creates the output file, where we'll stash all our results"""
-    if not os.path.exists(scratch+"\outputData"):
-        os.makedirs(scratch+"\outputData")
-    scratch += "\outputData"
+    if not os.path.exists(outputFolder+"\\temporaryData"):
+        os.makedirs(outputFolder+"\\temporaryData")
+    tempData = outputFolder + "\\temporaryData"
+
+    if not os.path.exists(outputFolder+"\outputData"):
+        os.makedirs(outputFolder+"\outputData")
+    outputData = outputFolder+"\outputData"
 
     """Clips our stream network to a HUC10 region"""
-    clippedStreamNetwork = scratch + "\clippedStreamNetwork.shp"
+    clippedStreamNetwork = tempData + "\clippedStreamNetwork.shp"
     arcpy.AddMessage("Clipping stream network...")
     arcpy.Clip_analysis(streamNetwork, huc10, clippedStreamNetwork)\
 
     """Makes the reaches"""
-    reachArray = makeReaches(testing, dem, clippedStreamNetwork, precipMap, regionNumber, scratch, nValue, t_cValue)
+    reachArray = makeReaches(testing, dem, clippedStreamNetwork, precipMap, regionNumber, tempData, nValue, t_cValue)
 
     """Outputs data. Delete in final build"""
-    if testing:
-        for reach in reachArray:
-            arcpy.AddMessage("Width: " + str(reach.width) + " meters")
-            arcpy.AddMessage("Q_2: " + str(reach.q_2) + " cubic feet per second")
-            arcpy.AddMessage("Slope: " + str(reach.slope))
-            arcpy.AddMessage("Grain Size: " + str(reach.grainSize) + " ")
-            arcpy.AddMessage(" ")
-    else:
-        for i in range(1, 2500, 100):
-            arcpy.AddMessage("Width: " + str(reachArray[i].width))
-            arcpy.AddMessage("Q_2: " + str(reachArray[i].q_2))
-            arcpy.AddMessage("Slope: " + str(reachArray[i].slope))
-            arcpy.AddMessage("Grain Size: " + str(reachArray[i].grainSize))
-            arcpy.AddMessage(" ")
-
-    """Calculates the grain size for the reaches"""
-    #if not testing:  #not yet, just a reminder that this needs to happen eventually
-        #for reach in reachArray:
-            #reach.calculateGrainSize(nValue, t_cValue)
+    writeResults(reachArray, testing, outputData)
 
 
-def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, scratch, nValue, t_cValue):
+
+
+def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, nValue, t_cValue):
     """Goes through every reach in the stream network, calculates its width and Q_2 value, and stores that data in a
     Reach object, which is then placed in an array"""
 
@@ -84,22 +72,21 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, scratch, n
             for j in range(10):
                 polyline = polylineCursor.next()
 
-            slope = findSlope(dem, polyline, scratch)
-            width = findWidth(flowAccumulation, precipMap, scratch, cellSize)
-            q_2 = findQ_2(flowAccumulation, precipMap, scratch, cellSize, regionNumber)
+            slope = findSlope(dem, polyline, tempData)
+            width = findWidth(flowAccumulation, precipMap, tempData, cellSize)
+            q_2 = findQ_2(flowAccumulation, precipMap, tempData, cellSize, regionNumber)
 
             reach = Reach(width, q_2, slope, polyline[0])
             reach.calculateGrainSize(nValue, t_cValue)
 
             reaches.append(reach)
-
     else:
         i = 0
         for polyline in polylineCursor:
 
-            slope = findSlope(dem, polyline, scratch)
-            width = findWidth(flowAccumulation, precipMap, scratch, cellSize)
-            q_2 = findQ_2(flowAccumulation, precipMap, scratch, cellSize, regionNumber)
+            slope = findSlope(dem, polyline, tempData)
+            width = findWidth(flowAccumulation, precipMap, tempData, cellSize)
+            q_2 = findQ_2(flowAccumulation, precipMap, tempData, cellSize, regionNumber)
 
             reach = Reach(width, q_2, slope, polyline[0])
             reach.calculateGrainSize(nValue, t_cValue)
@@ -107,7 +94,6 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, scratch, n
             reaches.append(reach)
             i += 1
             arcpy.AddMessage("Completed Reach " + str(i) + " out of " + numReachesString)
-
 
     del polyline
     del polylineCursor
@@ -117,15 +103,15 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, scratch, n
     return reaches
 
 
-def findQ_2(flowAccumulation, precipMap, scratch, cellSize, regionNumber):
+def findQ_2(flowAccumulation, precipMap, tempData, cellSize, regionNumber):
     """Returns the value of a two year flood event"""
     #TODO: Write findQ_2()
-    searchCursor = arcpy.da.SearchCursor(scratch + "\precipPoint.shp", "Inches")
+    searchCursor = arcpy.da.SearchCursor(tempData + "\precipPoint.shp", "Inches")
     row = searchCursor.next()
     precip = row[0]
     del row, searchCursor
 
-    searchCursor = arcpy.da.SearchCursor(scratch + "\\flowPoint.shp", "RASTERVALU")
+    searchCursor = arcpy.da.SearchCursor(tempData + "\\flowPoint.shp", "RASTERVALU")
     row = searchCursor.next()
     flowAccAtPoint = row[0]
     flowAccAtPoint *= cellSize # multiplies by the size of the cell to get area
@@ -152,23 +138,25 @@ def findQ_2(flowAccumulation, precipMap, scratch, cellSize, regionNumber):
     else:
         q_2 = 0.803 * (flowAccAtPoint**0.672) * (precip ** 1.16)
 
+    q_2 /= 35.3147 # converts from cubic feet to cubic meters
+
     return q_2
 
 
 """NOTE: To improve efficiency, this function is using a point file created in findSlope(). If findSlope() isn't
 executed in front of findWidth(), or if it no longer needs to create a point, this function will break."""
-def findWidth(flowAccumulation, precipMap, scratch, cellSize):
+def findWidth(flowAccumulation, precipMap, tempData, cellSize):
     """Estimates the width of a reach, based on its drainage area and precipitation levels"""
-    pointLayer = scratch + "\point.shp"
+    pointLayer = tempData + "\point.shp"
     arcpy.Intersect_analysis([pointLayer, precipMap], "precipPoint")
-    searchCursor = arcpy.da.SearchCursor(scratch + "\precipPoint.shp", "Inches")
+    searchCursor = arcpy.da.SearchCursor(tempData + "\precipPoint.shp", "Inches")
     row = searchCursor.next()
     precip = row[0]
     precip *=2.54 # converts to centimeters
     del row, searchCursor
 
-    arcpy.sa.ExtractValuesToPoints(scratch+"\point.shp", flowAccumulation, scratch + "\\flowPoint")
-    searchCursor = arcpy.da.SearchCursor(scratch + "\\flowPoint.shp", "RASTERVALU")
+    arcpy.sa.ExtractValuesToPoints(tempData+"\point.shp", flowAccumulation, tempData + "\\flowPoint")
+    searchCursor = arcpy.da.SearchCursor(tempData + "\\flowPoint.shp", "RASTERVALU")
     row = searchCursor.next()
     flowAccAtPoint = row[0]
     flowAccAtPoint *= cellSize
@@ -179,14 +167,18 @@ def findWidth(flowAccumulation, precipMap, scratch, cellSize):
     del row, searchCursor
 
     width = 0.177 * (flowAccAtPoint ** 0.397) * (precip ** 0.453)
+
+    if width < .3: # establishes a minimum width value
+        width = .3
+
     return width
 
 
-def findSlope(dem, polyline, scratch):
+def findSlope(dem, polyline, tempData):
     """Finds the average slope of the reach in question"""
     length = polyline[0].length
-    firstPointElevation = findElevationAtPoint(dem, polyline[0].firstPoint,scratch)
-    secondPointElevation = findElevationAtPoint(dem, polyline[0].lastPoint, scratch)
+    firstPointElevation = findElevationAtPoint(dem, polyline[0].firstPoint,tempData)
+    secondPointElevation = findElevationAtPoint(dem, polyline[0].lastPoint, tempData)
 
     elevationDifference = abs(firstPointElevation - secondPointElevation)
 
@@ -195,7 +187,7 @@ def findSlope(dem, polyline, scratch):
     return slope
 
 
-def findElevationAtPoint(dem, point, scratch):
+def findElevationAtPoint(dem, point, tempData):
     """Finds the elevation at a certain point based on a DEM"""
     """
     I can't find a good way to just pull the data straight from the raster, so instead, we're having to
@@ -204,14 +196,15 @@ def findElevationAtPoint(dem, point, scratch):
     works. If anyone can find a better way, email me at banderson1618@gmail.com
     """
     sr = arcpy.Describe(dem).spatialReference
-    arcpy.env.workspace = scratch
-    arcpy.CreateFeatureclass_management(scratch, "point.shp", "POINT", "", "DISABLED", "DISABLED", sr)
-    fc = scratch+"\point.shp"
+    arcpy.env.workspace = tempData
+    arcpy.CreateFeatureclass_management(tempData, "point.shp", "POINT", "", "DISABLED", "DISABLED", sr)
+    #arcpy.CreateFeatureclass_management(tempData, "point.shp", "POINT", "", "DISABLED", "DISABLED")
+    fc = tempData+"\point.shp"
     cursor = arcpy.da.InsertCursor(fc, ["SHAPE@"])
     cursor.insertRow([point])
     del cursor
-    pointLayer = scratch+"\pointElevation"
-    arcpy.sa.ExtractValuesToPoints(scratch+"\point.shp", dem, pointLayer)
+    pointLayer = tempData+"\pointElevation"
+    arcpy.sa.ExtractValuesToPoints(tempData+"\point.shp", dem, pointLayer)
     searchCursor = arcpy.da.SearchCursor(pointLayer+".shp", "RASTERVALU")
     row = searchCursor.next()
     elevation = row[0]
@@ -219,6 +212,34 @@ def findElevationAtPoint(dem, point, scratch):
     del row
 
     return elevation
+
+
+def writeResults(reachArray, testing, outputData):
+    if testing:
+        testOutput = open(outputData + "\\OutputQ_2ConversionMinWidth.txt", "w")
+        for reach in reachArray:
+            testOutput.write("Width: " + str(reach.width) + " meters")
+            testOutput.write("\nQ_2: " + str(reach.q_2) + " cubic meters per second")
+            testOutput.write("\nSlope: " + str(reach.slope))
+            testOutput.write("\nGrain Size: " + str(reach.grainSize) + "\n\n")
+        testOutput.close()
+    else:
+        testOutput = open(outputData + "\\OutputQ_2ConversionMinWidth.txt", "w")
+        for i in range(1, 2500, 100):
+            testOutput.write("Width: " + str(reach.width) + " meters")
+            testOutput.write("\nQ_2: " + str(reach.q_2) + " cubic meters per second")
+            testOutput.write("\nSlope: " + str(reach.slope))
+            testOutput.write("\nGrain Size: " + str(reach.grainSize) + "\n\n")
+        testOutput.close()
+
+
+def writeOutput(reachArray, outputData):
+    arcpy.CreateFeatureclass_management(outputData, "GrainSize.shp", "POLYLINE", "", "DISABLED", "DISABLED")
+    outputFile = outputData + "\GrainSize.shp"
+    cursor = arcpy.da.InsertCursor(outputFile, ["SHAPE@", ""])
+
+    i = 1
+
 
 
 if __name__ == '__main__':
