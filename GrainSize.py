@@ -25,7 +25,7 @@ def main(dem,
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")
 
-    testing = True
+    testing = False
 
     """Creates the output file, where we'll stash all our results"""
     if not os.path.exists(outputFolder+"\\temporaryData"):
@@ -62,13 +62,14 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
     cellSizeX = arcpy.GetRasterProperties_management(flowAccumulation, "CELLSIZEX")
     cellSizeY = arcpy.GetRasterProperties_management(flowAccumulation, "CELLSIZEY")
     cellSize = float(cellSizeX.getOutput(0)) * float(cellSizeY.getOutput(0))
+    arcpy.AddMessage(str(cellSize))
     numReachesString = str(arcpy.GetCount_management(streamNetwork))
 
     arcpy.AddMessage("Creating Reach Array...")
 
     """If testing, only go through the loop once. Otherwise, go through every reach"""
     if testing:
-        for i in range(10):
+        for i in range(5):
             for j in range(10):
                 polyline = polylineCursor.next()
 
@@ -155,7 +156,11 @@ def findWidth(flowAccumulation, precipMap, tempData, cellSize):
     precip *=2.54 # converts to centimeters
     del row, searchCursor
 
-    arcpy.sa.ExtractValuesToPoints(tempData+"\point.shp", flowAccumulation, tempData + "\\flowPoint")
+    arcpy.Buffer_analysis(tempData + "\point.shp", tempData + "\pointBuffer.shp", "20 Meters")
+    arcpy.PolygonToRaster_conversion(tempData + "\pointBuffer.shp", "FID", tempData + "\pointBufferRaster.tif", cellsize = 10)
+    maxFlow = arcpy.sa.ZonalStatistics(tempData + "\pointBufferRaster.tif", "Value", flowAccumulation, "MAXIMUM")
+    arcpy.sa.ExtractValuesToPoints(tempData+"\point.shp", maxFlow, tempData + "\\flowPoint")
+
     searchCursor = arcpy.da.SearchCursor(tempData + "\\flowPoint.shp", "RASTERVALU")
     row = searchCursor.next()
     flowAccAtPoint = row[0]
@@ -225,11 +230,11 @@ def writeResults(reachArray, testing, outputData):
         testOutput.close()
     else:
         testOutput = open(outputData + "\\OutputQ_2ConversionMinWidth.txt", "w")
-        for i in range(1, 2500, 100):
-            testOutput.write("Width: " + str(reach.width) + " meters")
-            testOutput.write("\nQ_2: " + str(reach.q_2) + " cubic meters per second")
-            testOutput.write("\nSlope: " + str(reach.slope))
-            testOutput.write("\nGrain Size: " + str(reach.grainSize) + "\n\n")
+        for i in range(1, 2500, 50):
+            testOutput.write("Width: " + str(reachArray[i].width) + " meters")
+            testOutput.write("\nQ_2: " + str(reachArray[i].q_2) + " cubic meters per second")
+            testOutput.write("\nSlope: " + str(reachArray[i].slope))
+            testOutput.write("\nGrain Size: " + str(reachArray[i].grainSize) + "\n\n")
         testOutput.close()
 
 
