@@ -25,7 +25,7 @@ def main(dem,
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")
 
-    testing = False
+    testing = True
 
     """Creates the output file, where we'll stash all our results"""
     if not os.path.exists(outputFolder+"\\temporaryData"):
@@ -34,7 +34,7 @@ def main(dem,
 
     if not os.path.exists(outputFolder+"\outputData"):
         os.makedirs(outputFolder+"\outputData")
-    outputData = outputFolder+"\outputData"
+    outputDataPath = outputFolder+"\outputData"
 
     """Clips our stream network to a HUC10 region"""
     clippedStreamNetwork = tempData + "\clippedStreamNetwork.shp"
@@ -45,9 +45,9 @@ def main(dem,
     reachArray = makeReaches(testing, dem, clippedStreamNetwork, precipMap, regionNumber, tempData, nValue, t_cValue)
 
     """Outputs data. Delete in final build"""
-    writeResults(reachArray, testing, outputData)
+    writeResults(reachArray, testing, outputDataPath)
 
-
+    writeOutput(reachArray, outputDataPath)
 
 
 def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, nValue, t_cValue):
@@ -70,8 +70,8 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
     """If testing, only go through the loop once. Otherwise, go through every reach"""
     if testing:
         for i in range(5):
-            for j in range(10):
-                polyline = polylineCursor.next()
+            # for j in range(10):
+            polyline = polylineCursor.next()
 
             slope = findSlope(dem, polyline, tempData)
             width = findWidth(flowAccumulation, precipMap, tempData, cellSize)
@@ -238,12 +238,19 @@ def writeResults(reachArray, testing, outputData):
         testOutput.close()
 
 
-def writeOutput(reachArray, outputData):
-    arcpy.CreateFeatureclass_management(outputData, "GrainSize.shp", "POLYLINE", "", "DISABLED", "DISABLED")
-    outputFile = outputData + "\GrainSize.shp"
-    cursor = arcpy.da.InsertCursor(outputFile, ["SHAPE@", ""])
+def writeOutput(reachArray, outputDataPath):
+    outputFile = outputDataPath + "\GrainSize.shp"
+    arcpy.CreateFeatureclass_management(outputDataPath, "GrainSize.shp", "POLYLINE", "", "DISABLED", "DISABLED")
+    arcpy.AddField_management(outputFile, "GrainSize", "DOUBLE")
 
-    i = 1
+    insertCursor = arcpy.da.InsertCursor(outputFile, ["SHAPE@", "GrainSize"])
+    for reach in reachArray:
+        insertCursor.insertRow([reach.polyline, reach.grainSize])
+
+    del insertCursor
+
+    #updateCursor = arcpy.da.UpdateCursor(outputFile)
+    #for row in updateCursor:
 
 
 
