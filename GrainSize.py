@@ -63,7 +63,9 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
     cellSizeY = arcpy.GetRasterProperties_management(flowAccumulation, "CELLSIZEY")
     cellSize = float(cellSizeX.getOutput(0)) * float(cellSizeY.getOutput(0))
     arcpy.AddMessage(str(cellSize))
-    numReachesString = str(arcpy.GetCount_management(streamNetwork))
+    numReaches = int(arcpy.GetCount_management(streamNetwork).getOutput(0))
+    numReachesString = str(numReaches)
+    arcpy.SetProgressor("step", "Creating Reach 1 out of " + numReachesString, 0, numReaches, 1)
 
     arcpy.AddMessage("Creating Reach Array...")
 
@@ -94,7 +96,8 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
 
             reaches.append(reach)
             i += 1
-            arcpy.AddMessage("Completed Reach " + str(i) + " out of " + numReachesString)
+            arcpy.AddMessage("Creating Reach " + str(i) + " out of " + numReachesString + " (" +
+                             str((float(i)/float(numReaches))*100) + "% complete)")
 
     del polyline
     del polylineCursor
@@ -220,6 +223,7 @@ def findElevationAtPoint(dem, point, tempData):
 
 
 def writeResults(reachArray, testing, outputData):
+    """This function is meant to save the results for future study"""
     if testing:
         testOutput = open(outputData + "\\OutputQ_2ConversionMinWidth.txt", "w")
         for reach in reachArray:
@@ -231,17 +235,18 @@ def writeResults(reachArray, testing, outputData):
     else:
         testOutput = open(outputData + "\\DataForAsotinReaches.txt", "w")
         for i in range(1769):
-            testOutput.write(str(reachArray[i].width))
-            testOutput.write(str(reachArray[i].q_2))
-            testOutput.write(str(reachArray[i].slope))
-            testOutput.write(str(reachArray[i].grainSize))
+            testOutput.write(str(reachArray[i].width) + "\n")
+            testOutput.write(str(reachArray[i].q_2) + "\n")
+            testOutput.write(str(reachArray[i].slope) + "\n")
+            testOutput.write(str(reachArray[i].grainSize) + "\n")
         testOutput.close()
 
 
 def writeOutput(reachArray, outputDataPath):
     arcpy.env.workspace = outputDataPath
     outputShape = outputDataPath + "\GrainSize.shp"
-    outputLayer = outputDataPath + "\GrainSize_lyr"
+    tempLayer = outputDataPath + "\GrainSize_lyr"
+    outputLayer = outputDataPath + "\GrainSize.lyr"
     arcpy.CreateFeatureclass_management(outputDataPath, "GrainSize.shp", "POLYLINE", "", "DISABLED", "DISABLED")
     arcpy.AddField_management(outputShape, "GrainSize", "DOUBLE")
 
@@ -249,6 +254,11 @@ def writeOutput(reachArray, outputDataPath):
     for reach in reachArray:
         insertCursor.insertRow([reach.polyline, reach.grainSize])
     del insertCursor
+
+    arcpy.MakeFeatureLayer_management(outputShape, tempLayer)
+    arcpy.SaveToLayerFile_management(tempLayer, outputLayer)
+
+    arcpy.AddMessage(arcpy.mapping.Layer(outputLayer).symbologyType)
 
 
 if __name__ == '__main__':
