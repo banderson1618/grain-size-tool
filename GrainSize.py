@@ -25,7 +25,7 @@ def main(dem,
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")
 
-    testing = True
+    testing = False
 
     """Creates the output file, where we'll stash all our results"""
     if not os.path.exists(outputFolder+"\\temporaryData"):
@@ -44,10 +44,10 @@ def main(dem,
     """Makes the reaches"""
     reachArray = makeReaches(testing, dem, clippedStreamNetwork, precipMap, regionNumber, tempData, nValue, t_cValue)
 
+    writeOutput(reachArray, outputDataPath)
     """Outputs data. Delete in final build"""
     writeResults(reachArray, testing, outputDataPath)
 
-    writeOutput(reachArray, outputDataPath)
 
 
 def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, nValue, t_cValue):
@@ -229,29 +229,26 @@ def writeResults(reachArray, testing, outputData):
             testOutput.write("\nGrain Size: " + str(reach.grainSize) + "\n\n")
         testOutput.close()
     else:
-        testOutput = open(outputData + "\\OutputQ_2ConversionMinWidth.txt", "w")
-        for i in range(1, 2500, 50):
-            testOutput.write("Width: " + str(reachArray[i].width) + " meters")
-            testOutput.write("\nQ_2: " + str(reachArray[i].q_2) + " cubic meters per second")
-            testOutput.write("\nSlope: " + str(reachArray[i].slope))
-            testOutput.write("\nGrain Size: " + str(reachArray[i].grainSize) + "\n\n")
+        testOutput = open(outputData + "\\DataForAsotinReaches.txt", "w")
+        for i in range(1769):
+            testOutput.write(str(reachArray[i].width))
+            testOutput.write(str(reachArray[i].q_2))
+            testOutput.write(str(reachArray[i].slope))
+            testOutput.write(str(reachArray[i].grainSize))
         testOutput.close()
 
 
 def writeOutput(reachArray, outputDataPath):
-    outputFile = outputDataPath + "\GrainSize.shp"
+    arcpy.env.workspace = outputDataPath
+    outputShape = outputDataPath + "\GrainSize.shp"
+    outputLayer = outputDataPath + "\GrainSize_lyr"
     arcpy.CreateFeatureclass_management(outputDataPath, "GrainSize.shp", "POLYLINE", "", "DISABLED", "DISABLED")
-    arcpy.AddField_management(outputFile, "GrainSize", "DOUBLE")
+    arcpy.AddField_management(outputShape, "GrainSize", "DOUBLE")
 
-    insertCursor = arcpy.da.InsertCursor(outputFile, ["SHAPE@", "GrainSize"])
+    insertCursor = arcpy.da.InsertCursor(outputShape, ["SHAPE@", "GrainSize"])
     for reach in reachArray:
         insertCursor.insertRow([reach.polyline, reach.grainSize])
-
     del insertCursor
-
-    #updateCursor = arcpy.da.UpdateCursor(outputFile)
-    #for row in updateCursor:
-
 
 
 if __name__ == '__main__':
