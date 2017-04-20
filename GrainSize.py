@@ -1,11 +1,11 @@
 ########################################################################################################################
-# Name: Grain Size Distribution Tool                                                                                   #
-# Purpose: Find the average size of gravel in a stream network. Because the Q_2 value is localized, this will not work #
-# outside the Columbia River Basin, though modifying findQ_2() for a particular region should be relatively simple.    #
-#                                                                                                                      #
-# Author: Braden Anderson                                                                                              #
-# Created: 31 March 2017                                                                                               #
-# Last Update: 10 April 2017                                                                                           #
+# Name: Grain Size Distribution Tool
+# Purpose: Find the average size of gravel in a stream network. Because the Q_2 value is localized, this will not work
+# outside the Columbia River Basin, though modifying findQ_2() for a particular region should be relatively simple.
+#
+# Author: Braden Anderson
+# Created: 31 March 2017
+# Last Update: 20 April 2017
 ########################################################################################################################
 
 import arcpy
@@ -13,25 +13,26 @@ import os
 from Reach import Reach
 
 
-def main(dem,
-         streamNetwork,
-         precipMap,
-         huc10,
-         outputFolder,
-         nValue,
-         t_cValue,
-         regionNumber):
+def main(dem,               # Path to the DEM file
+         streamNetwork,     # Path to the stream network file
+         precipMap,         # Path to the precipitation map file
+         huc10,             # Path to the polygon of our HUC10 region
+         outputFolder,      # Path to where we want to store our output
+         nValue,            # Our Manning coefficient
+         t_cValue,          # Our torque value
+         regionNumber):     # Which region we use for our Q2 equation
     """Source code for our tool"""
     arcpy.env.overwriteOutput = True
-    arcpy.CheckOutExtension("Spatial")
+    arcpy.CheckOutExtension("Spatial")  # We'll be using a bunch of spatial analysis tools
 
-    testing = False
+    testing = True  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
 
-    """Creates the output file, where we'll stash all our results"""
+    """Creates the temporary data folder, where we'll put all our intermediate results"""
     if not os.path.exists(outputFolder+"\\temporaryData"):
         os.makedirs(outputFolder+"\\temporaryData")
     tempData = outputFolder + "\\temporaryData"
 
+    """Creates our output folder, where we'll put our final results"""
     if not os.path.exists(outputFolder+"\outputData"):
         os.makedirs(outputFolder+"\outputData")
     outputDataPath = outputFolder+"\outputData"
@@ -39,15 +40,16 @@ def main(dem,
     """Clips our stream network to a HUC10 region"""
     clippedStreamNetwork = tempData + "\clippedStreamNetwork.shp"
     arcpy.AddMessage("Clipping stream network...")
-    arcpy.Clip_analysis(streamNetwork, huc10, clippedStreamNetwork)\
+    arcpy.Clip_analysis(streamNetwork, huc10, clippedStreamNetwork)
 
     """Makes the reaches"""
     reachArray = makeReaches(testing, dem, clippedStreamNetwork, precipMap, regionNumber, tempData, nValue, t_cValue)
 
+    """Writes our output to a folder"""
     writeOutput(reachArray, outputDataPath)
-    """Outputs data. Delete in final build"""
-    writeResults(reachArray, testing, outputDataPath)
 
+    """Writes data to a text file. Delete in final build"""
+    writeResults(reachArray, testing, outputDataPath)
 
 
 def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, nValue, t_cValue):
@@ -71,27 +73,34 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
 
     """If testing, only go through the loop once. Otherwise, go through every reach"""
     if testing:
-        for i in range(5):
-            # for j in range(10):
-            polyline = polylineCursor.next()
+        for i in range(300):
+            row = polylineCursor.next()
+            lastPointElevation = findElevationAtPoint(dem, row[0].lastPoint, tempData)
+            firstPointElevation = findElevationAtPoint(dem, row[0].firstPoint, tempData)
+            flowAccAtPoint = findFlowAccumulation(flowAccumulation, tempData, cellSize)
+            precip = findPrecipitation(precipMap, tempData)
 
-            slope = findSlope(dem, polyline, tempData)
-            width = findWidth(flowAccumulation, precipMap, tempData, cellSize)
-            q_2 = findQ_2(flowAccumulation, precipMap, tempData, cellSize, regionNumber)
+            slope = findSlope(row, firstPointElevation, lastPointElevation)
+            width = findWidth(flowAccAtPoint, precip)
+            q_2 = findQ_2(flowAccAtPoint, precip, regionNumber)
 
-            reach = Reach(width, q_2, slope, polyline[0])
+            reach = Reach(width, q_2, slope, row[0])
             reach.calculateGrainSize(nValue, t_cValue)
 
             reaches.append(reach)
     else:
         i = 0
-        for polyline in polylineCursor:
+        for row in polylineCursor:
+            lastPointElevation = findElevationAtPoint(dem, row[0].lastPoint, tempData)
+            firstPointElevation = findElevationAtPoint(dem, row[0].firstPoint, tempData)
+            flowAccAtPoint = findFlowAccumulation(flowAccumulation, tempData, cellSize)
+            precip = findPrecipitation(precipMap, tempData)
 
-            slope = findSlope(dem, polyline, tempData)
-            width = findWidth(flowAccumulation, precipMap, tempData, cellSize)
-            q_2 = findQ_2(flowAccumulation, precipMap, tempData, cellSize, regionNumber)
+            slope = findSlope(row, firstPointElevation, lastPointElevation)
+            width = findWidth(flowAccAtPoint, precip)
+            q_2 = findQ_2(flowAccAtPoint, precip, regionNumber)
 
-            reach = Reach(width, q_2, slope, polyline[0])
+            reach = Reach(width, q_2, slope, row[0])
             reach.calculateGrainSize(nValue, t_cValue)
 
             reaches.append(reach)
@@ -99,7 +108,7 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
             arcpy.AddMessage("Creating Reach " + str(i) + " out of " + numReachesString + " (" +
                              str((float(i)/float(numReaches))*100) + "% complete)")
 
-    del polyline
+    del row
     del polylineCursor
 
     arcpy.AddMessage("Reach Array Created.")
@@ -107,22 +116,10 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
     return reaches
 
 
-def findQ_2(flowAccumulation, precipMap, tempData, cellSize, regionNumber):
+def findQ_2(flowAccAtPoint, precip, regionNumber):
     """Returns the value of a two year flood event"""
-    #TODO: Write findQ_2()
-    searchCursor = arcpy.da.SearchCursor(tempData + "\precipPoint.shp", "Inches")
-    row = searchCursor.next()
-    precip = row[0]
-    del row, searchCursor
-
-    searchCursor = arcpy.da.SearchCursor(tempData + "\\flowPoint.shp", "RASTERVALU")
-    row = searchCursor.next()
-    flowAccAtPoint = row[0]
-    flowAccAtPoint *= cellSize # multiplies by the size of the cell to get area
-    flowAccAtPoint /= 2589988 # converts to square miles, which our formula requires
-    if flowAccAtPoint < 0:
-        flowAccAtPoint = 0
-
+    """These equations are based on the USGS database. To find your region, go to the following website:
+    https://pubs.usgs.gov/fs/fs-016-01/ """
     if regionNumber == 1:
         q_2 = 0.35 * (flowAccAtPoint**0.923) * (precip ** 1.24)
     elif regionNumber == 2:
@@ -142,57 +139,58 @@ def findQ_2(flowAccumulation, precipMap, tempData, cellSize, regionNumber):
     else:
         q_2 = 0.803 * (flowAccAtPoint**0.672) * (precip ** 1.16)
 
-    q_2 /= 35.3147 # converts from cubic feet to cubic meters
+    q_2 /= 35.3147  # converts from cubic feet to cubic meters
 
     return q_2
 
 
-"""NOTE: To improve efficiency, this function is using a point file created in findSlope(). If findSlope() isn't
-executed in front of findWidth(), or if it no longer needs to create a point, this function will break."""
-def findWidth(flowAccumulation, precipMap, tempData, cellSize):
+def findWidth(flowAccAtPoint, precip):
     """Estimates the width of a reach, based on its drainage area and precipitation levels"""
+    width = 0.177 * (flowAccAtPoint ** 0.397) * (precip ** 0.453)  # This is the equation we're using to estimate width
+    if width < .3:  # establishes a minimum width value
+        width = .3
+    return width
+
+
+def findSlope(polyline,firstPointElevation, secondPointElevation):
+    """Finds the average slope of the reach in question"""
+    length = polyline[0].length
+    elevationDifference = abs(firstPointElevation - secondPointElevation)
+    slope = elevationDifference/length
+    return slope
+
+
+def findFlowAccumulation(flowAccumulation, tempData, cellSize):
+    """Because our stream network doesn't line up perfectly with our flow accumulation map, we need to create a
+         buffer and search in that buffer for the max flow accumulation using Zonal Statistics"""
+    arcpy.Buffer_analysis(tempData + "\point.shp", tempData + "\pointBuffer.shp", "20 Meters")
+    arcpy.PolygonToRaster_conversion(tempData + "\pointBuffer.shp", "FID", tempData + "\pointBufferRaster.tif",
+                                     cellsize=10)
+    maxFlow = arcpy.sa.ZonalStatistics(tempData + "\pointBufferRaster.tif", "Value", flowAccumulation, "MAXIMUM")
+    arcpy.sa.ExtractValuesToPoints(tempData + "\point.shp", maxFlow, tempData + "\\flowPoint")
+
+    searchCursor = arcpy.da.SearchCursor(tempData + "\\flowPoint.shp", "RASTERVALU")
+    row = searchCursor.next()
+    flowAccAtPoint = row[0]
+    del row
+    del searchCursor
+    flowAccAtPoint *= cellSize  # gives us the total area of flow accumulation, rather than just the number of cells
+    flowAccAtPoint /= 1000000  # converts from square meters to square kilometers
+    if flowAccAtPoint < 0:
+        flowAccAtPoint = 0
+
+    return flowAccAtPoint
+
+
+def findPrecipitation(precipMap, tempData):
     pointLayer = tempData + "\point.shp"
     arcpy.Intersect_analysis([pointLayer, precipMap], "precipPoint")
     searchCursor = arcpy.da.SearchCursor(tempData + "\precipPoint.shp", "Inches")
     row = searchCursor.next()
     precip = row[0]
-    precip *=2.54 # converts to centimeters
+    precip *= 2.54  # converts to centimeters
     del row, searchCursor
-
-    arcpy.Buffer_analysis(tempData + "\point.shp", tempData + "\pointBuffer.shp", "20 Meters")
-    arcpy.PolygonToRaster_conversion(tempData + "\pointBuffer.shp", "FID", tempData + "\pointBufferRaster.tif", cellsize = 10)
-    maxFlow = arcpy.sa.ZonalStatistics(tempData + "\pointBufferRaster.tif", "Value", flowAccumulation, "MAXIMUM")
-    arcpy.sa.ExtractValuesToPoints(tempData+"\point.shp", maxFlow, tempData + "\\flowPoint")
-
-    searchCursor = arcpy.da.SearchCursor(tempData + "\\flowPoint.shp", "RASTERVALU")
-    row = searchCursor.next()
-    flowAccAtPoint = row[0]
-    flowAccAtPoint *= cellSize
-    flowAccAtPoint /= 1000000 # converts from square meters to square kilometers
-    if flowAccAtPoint < 0:
-        flowAccAtPoint = 0
-
-    del row, searchCursor
-
-    width = 0.177 * (flowAccAtPoint ** 0.397) * (precip ** 0.453)
-
-    if width < .3: # establishes a minimum width value
-        width = .3
-
-    return width
-
-
-def findSlope(dem, polyline, tempData):
-    """Finds the average slope of the reach in question"""
-    length = polyline[0].length
-    firstPointElevation = findElevationAtPoint(dem, polyline[0].firstPoint,tempData)
-    secondPointElevation = findElevationAtPoint(dem, polyline[0].lastPoint, tempData)
-
-    elevationDifference = abs(firstPointElevation - secondPointElevation)
-
-    slope = elevationDifference/length
-
-    return slope
+    return precip
 
 
 def findElevationAtPoint(dem, point, tempData):
@@ -206,9 +204,7 @@ def findElevationAtPoint(dem, point, tempData):
     sr = arcpy.Describe(dem).spatialReference
     arcpy.env.workspace = tempData
     arcpy.CreateFeatureclass_management(tempData, "point.shp", "POINT", "", "DISABLED", "DISABLED", sr)
-    #arcpy.CreateFeatureclass_management(tempData, "point.shp", "POINT", "", "DISABLED", "DISABLED")
-    fc = tempData+"\point.shp"
-    cursor = arcpy.da.InsertCursor(fc, ["SHAPE@"])
+    cursor = arcpy.da.InsertCursor(tempData+"\point.shp", ["SHAPE@"])
     cursor.insertRow([point])
     del cursor
     pointLayer = tempData+"\pointElevation"
