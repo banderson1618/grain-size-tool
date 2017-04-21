@@ -25,7 +25,7 @@ def main(dem,               # Path to the DEM file
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")  # We'll be using a bunch of spatial analysis tools
 
-    testing = False  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
+    testing = True  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
 
     """Creates the temporary data folder, where we'll put all our intermediate results"""
     if not os.path.exists(outputFolder+"\\temporaryData"):
@@ -73,7 +73,7 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
 
     """If testing, only go through the loop once. Otherwise, go through every reach"""
     if testing:
-        for i in range(300):
+        for i in range(10):
             row = polylineCursor.next()
             lastPointElevation = findElevationAtPoint(dem, row[0].lastPoint, tempData)
             firstPointElevation = findElevationAtPoint(dem, row[0].firstPoint, tempData)
@@ -253,11 +253,14 @@ def writeOutput(reachArray, outputDataPath):
         insertCursor.insertRow([reach.polyline, reach.grainSize])
     del insertCursor
 
+    sr = arcpy.SpatialReference("NAD 1983 UTM Zone 11N")
+    arcpy.DefineProjection_management(outputShape, sr)
+
     arcpy.MakeFeatureLayer_management(outputShape, tempLayer)
     arcpy.SaveToLayerFile_management(tempLayer, outputLayer)
 
 
 if __name__ == '__main__':
-    main(sys.argv[1],
-         sys.argv[2],
-         sys.argv[3])
+    main(os.sys.argv[1],
+         os.sys.argv[2],
+         os.sys.argv[3])
