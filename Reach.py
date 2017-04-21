@@ -16,5 +16,7 @@ class Reach(object):
     grainSize = -1
 
     def calculateGrainSize(self, n, t_c):
-        self.grainSize = 1.65 * (n**.6) * (self.q_2**.6) * (self.width**-.6) * (self.slope ** .7)
-        self.grainSize = self.grainSize / t_c
+        self.grainSize = (n**.6) * (self.q_2**.6) * (self.width**-.6) * (self.slope ** .7)
+        self.grainSize /= t_c
+        self.grainSize /= 1.65
+        self.grainSize *= 1000 # converts to millimeters

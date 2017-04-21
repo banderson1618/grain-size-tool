@@ -25,7 +25,7 @@ def main(dem,               # Path to the DEM file
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")  # We'll be using a bunch of spatial analysis tools
 
-    testing = True  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
+    testing = False  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
 
     """Creates the temporary data folder, where we'll put all our intermediate results"""
     if not os.path.exists(outputFolder+"\\temporaryData"):
@@ -220,22 +220,24 @@ def findElevationAtPoint(dem, point, tempData):
 
 def writeResults(reachArray, testing, outputData):
     """This function is meant to save the results for future study"""
-    if testing:
-        testOutput = open(outputData + "\\OutputQ_2ConversionMinWidth.txt", "w")
-        for reach in reachArray:
-            testOutput.write("Width: " + str(reach.width) + " meters")
-            testOutput.write("\nQ_2: " + str(reach.q_2) + " cubic meters per second")
-            testOutput.write("\nSlope: " + str(reach.slope))
-            testOutput.write("\nGrain Size: " + str(reach.grainSize) + "\n\n")
-        testOutput.close()
-    else:
-        testOutput = open(outputData + "\\DataForAsotinReaches.txt", "w")
-        for i in range(1769):
-            testOutput.write(str(reachArray[i].width) + "\n")
-            testOutput.write(str(reachArray[i].q_2) + "\n")
-            testOutput.write(str(reachArray[i].slope) + "\n")
-            testOutput.write(str(reachArray[i].grainSize) + "\n")
-        testOutput.close()
+    testOutput = open(outputData + "\Asotin_Data(readable).txt", "w")
+    i = 0
+    for reach in reachArray:
+        i += 1
+        testOutput.write("Reach " + str(i) + ":")
+        testOutput.write("\nWidth: " + str(reach.width) + " meters")
+        testOutput.write("\nQ_2: " + str(reach.q_2) + " cubic meters per second")
+        testOutput.write("\nSlope: " + str(reach.slope))
+        testOutput.write("\nGrain Size: " + str(reach.grainSize) + "\n\n")
+    testOutput.close()
+
+    inputDataFile = open(outputData + "Asotin_Data(for_reach_construction).txt", "w")
+    for reach in reachArray:
+        inputDataFile.write("\n" + str(reach.width))
+        inputDataFile.write("\n" + str(reach.q_2))
+        inputDataFile.write("\n" + str(reach.slope))
+        inputDataFile.write("\n" + str(reach.grainSize))
+    inputDataFile.close()
 
 
 def writeOutput(reachArray, outputDataPath):
@@ -253,8 +255,6 @@ def writeOutput(reachArray, outputDataPath):
 
     arcpy.MakeFeatureLayer_management(outputShape, tempLayer)
     arcpy.SaveToLayerFile_management(tempLayer, outputLayer)
-
-    arcpy.AddMessage(arcpy.mapping.Layer(outputLayer).symbologyType)
 
 
 if __name__ == '__main__':
