@@ -38,9 +38,12 @@ def main(dem,               # Path to the DEM file
     outputDataPath = outputFolder+"\outputData"
 
     """Clips our stream network to a HUC10 region"""
-    clippedStreamNetwork = tempData + "\clippedStreamNetwork.shp"
-    arcpy.AddMessage("Clipping stream network...")
-    arcpy.Clip_analysis(streamNetwork, huc10, clippedStreamNetwork)
+    if huc10 != None:
+        clippedStreamNetwork = tempData + "\clippedStreamNetwork.shp"
+        arcpy.AddMessage("Clipping stream network...")
+        arcpy.Clip_analysis(streamNetwork, huc10, clippedStreamNetwork)
+    else:
+        clippedStreamNetwork = streamNetwork
 
     """Makes the reaches"""
     reachArray = makeReaches(testing, dem, clippedStreamNetwork, precipMap, regionNumber, tempData, nValue, t_cValue)
@@ -220,7 +223,7 @@ def findElevationAtPoint(dem, point, tempData):
 
 def writeResults(reachArray, testing, outputData):
     """This function is meant to save the results for future study"""
-    testOutput = open(outputData + "\Asotin_Data(readable).txt", "w")
+    testOutput = open(outputData + "\Upper_Yakima_Data(readable).txt", "w")
     i = 0
     for reach in reachArray:
         i += 1
@@ -231,7 +234,7 @@ def writeResults(reachArray, testing, outputData):
         testOutput.write("\nGrain Size: " + str(reach.grainSize) + "\n\n")
     testOutput.close()
 
-    inputDataFile = open(outputData + "Asotin_Data(for_reach_construction).txt", "w")
+    inputDataFile = open(outputData + "Upper_Yakima_Data(for_reach_construction).txt", "w")
     for reach in reachArray:
         inputDataFile.write("\n" + str(reach.width))
         inputDataFile.write("\n" + str(reach.q_2))
@@ -242,10 +245,10 @@ def writeResults(reachArray, testing, outputData):
 
 def writeOutput(reachArray, outputDataPath):
     arcpy.env.workspace = outputDataPath
-    outputShape = outputDataPath + "\GrainSize.shp"
-    tempLayer = outputDataPath + "\GrainSize_lyr"
-    outputLayer = outputDataPath + "\GrainSize.lyr"
-    arcpy.CreateFeatureclass_management(outputDataPath, "GrainSize.shp", "POLYLINE", "", "DISABLED", "DISABLED")
+    outputShape = outputDataPath + "\UpperYakimaGrainSize.shp"
+    tempLayer = outputDataPath + "\UpperYakimaGrainSize_lyr"
+    outputLayer = outputDataPath + "\UpperYakimaGrainSize.lyr"
+    arcpy.CreateFeatureclass_management(outputDataPath, "UpperYakimaGrainSize.shp", "POLYLINE", "", "DISABLED", "DISABLED")
     arcpy.AddField_management(outputShape, "GrainSize", "DOUBLE")
 
     insertCursor = arcpy.da.InsertCursor(outputShape, ["SHAPE@", "GrainSize"])

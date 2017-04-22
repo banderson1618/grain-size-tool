@@ -50,7 +50,7 @@ class GrainSizeTool(object):
             displayName = "HUC 10 Boundary",
             name = "huc10",
             datatype = "DEFeatureClass",
-            parameterType = "Required",
+            parameterType = "Optional",
             direction = "Input",
             multiValue=False)
 
