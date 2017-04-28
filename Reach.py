@@ -11,12 +11,20 @@ class Reach(object):
         self.q_2 = q_2
         self.slope = slope
         self.polyline = polyline
-        self.xyPosition = polyline.centroid
 
     grainSize = -1
+    t_c = -1
 
     def calculateGrainSize(self, n, t_c):
         self.grainSize = (n**.6) * (self.q_2**.6) * (self.width**-.6) * (self.slope ** .7)
         self.grainSize /= t_c
         self.grainSize /= 1.65
         self.grainSize *= 1000 # converts to millimeters
+
+    def calculateT_c(self, n):
+        self.t_c = (n**.6) * (self.q_2**.6) * (self.width**-.6) * (self.slope ** .7)
+        self.grainSize /= self.grainSize * 1000     # I think this should take care of the conversion, not sure though
+        self.grainSize /= 1.65
+
+    def setGrainSize(self, grainSize):
+        self.grainSize = grainSize

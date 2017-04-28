@@ -25,7 +25,7 @@ def main(dem,               # Path to the DEM file
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")  # We'll be using a bunch of spatial analysis tools
 
-    testing = True  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
+    testing = False  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
 
     """Creates the temporary data folder, where we'll put all our intermediate results"""
     if not os.path.exists(outputFolder+"\\temporaryData"):
@@ -64,6 +64,7 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
     arcpy.AddMessage("Calculating Drainage Area...")
     flowDirection = arcpy.sa.FlowDirection(dem)
     flowAccumulation = arcpy.sa.FlowAccumulation(flowDirection)  # Calculates the flow accumulation to use in findWidth()
+    arcpy.AddMessage(type(flowAccumulation))
     cellSizeX = arcpy.GetRasterProperties_management(flowAccumulation, "CELLSIZEX")
     cellSizeY = arcpy.GetRasterProperties_management(flowAccumulation, "CELLSIZEY")
     cellSize = float(cellSizeX.getOutput(0)) * float(cellSizeY.getOutput(0))
