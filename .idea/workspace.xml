@@ -2,9 +2,9 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="539757c9-e317-43d8-8a36-ffa14e008a8b" name="Default" comment="">
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" afterPath="$PROJECT_DIR$/.idea/inspectionProfiles/Project_Default.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/GrainSize.py" afterPath="$PROJECT_DIR$/GrainSize.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/Reach.py" afterPath="$PROJECT_DIR$/Reach.py" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -19,11 +19,11 @@
   <component name="ExecutionTargetManager" SELECTED_TARGET="default_target" />
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="GrainSize.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="GrainSize.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/GrainSize.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="52">
-              <caret line="217" column="22" lean-forward="true" selection-start-line="217" selection-start-column="22" selection-end-line="217" selection-end-column="22" />
+            <state relative-caret-position="834">
+              <caret line="268" column="60" lean-forward="true" selection-start-line="268" selection-start-column="60" selection-end-line="268" selection-end-column="60" />
               <folding>
                 <element signature="e#597#609#0" expanded="true" />
               </folding>
@@ -44,26 +44,26 @@
       <file leaf-file-name="Reach.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Reach.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="255">
-              <caret line="15" column="12" lean-forward="true" selection-start-line="15" selection-start-column="12" selection-end-line="15" selection-end-column="12" />
+            <state relative-caret-position="476">
+              <caret line="28" column="38" lean-forward="true" selection-start-line="28" selection-start-column="38" selection-end-line="28" selection-end-column="38" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="main.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="main.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/../FindT_c/main.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="358">
-              <caret line="42" column="28" lean-forward="false" selection-start-line="42" selection-start-column="28" selection-end-line="42" selection-end-column="28" />
+            <state relative-caret-position="817">
+              <caret line="134" column="43" lean-forward="false" selection-start-line="134" selection-start-column="43" selection-end-line="134" selection-end-column="43" />
               <folding>
                 <element signature="e#0#12#0" expanded="true" />
-                <element signature="e#2598#3631#0" expanded="false" />
-                <element signature="e#3677#3978#0" expanded="false" />
-                <element signature="e#4052#4268#0" expanded="false" />
-                <element signature="e#4339#5467#0" expanded="false" />
-                <element signature="e#5518#5845#0" expanded="false" />
-                <element signature="e#5900#6993#0" expanded="false" />
+                <element signature="e#2625#3658#0" expanded="false" />
+                <element signature="e#3704#4005#0" expanded="false" />
+                <element signature="e#4079#4295#0" expanded="false" />
+                <element signature="e#4366#5494#0" expanded="false" />
+                <element signature="e#5545#5872#0" expanded="false" />
+                <element signature="e#5927#7020#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -91,9 +91,9 @@
       <list>
         <option value="$PROJECT_DIR$/GrainSize.pyt" />
         <option value="$PROJECT_DIR$/T_cFinder.py" />
-        <option value="$PROJECT_DIR$/GrainSize.py" />
         <option value="$PROJECT_DIR$/Reach.py" />
         <option value="$PROJECT_DIR$/../FindT_c/main.py" />
+        <option value="$PROJECT_DIR$/GrainSize.py" />
       </list>
     </option>
   </component>
@@ -134,8 +134,8 @@
       <foldersAlwaysOnTop value="true" />
     </navigator>
     <panes>
-      <pane id="Scratches" />
       <pane id="Scope" />
+      <pane id="Scratches" />
       <pane id="ProjectPane">
         <subPane>
           <PATH>
@@ -363,6 +363,48 @@
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/GrainSize.py">
       <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3689">
+          <caret line="217" column="22" lean-forward="true" selection-start-line="217" selection-start-column="22" selection-end-line="217" selection-end-column="22" />
+          <folding>
+            <element signature="e#597#609#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/GrainSize.pyt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="646">
+          <caret line="38" column="29" lean-forward="false" selection-start-line="38" selection-start-column="29" selection-end-line="38" selection-end-column="29" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Reach.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="255">
+          <caret line="15" column="12" lean-forward="true" selection-start-line="15" selection-start-column="12" selection-end-line="15" selection-end-column="12" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../FindT_c/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="0">
+          <caret line="0" column="0" lean-forward="false" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
+          <folding>
+            <element signature="e#0#12#0" expanded="true" />
+            <element signature="e#2625#3658#0" expanded="false" />
+            <element signature="e#3704#4005#0" expanded="false" />
+            <element signature="e#4079#4295#0" expanded="false" />
+            <element signature="e#4366#5494#0" expanded="false" />
+            <element signature="e#5545#5872#0" expanded="false" />
+            <element signature="e#5927#7020#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/GrainSize.py">
+      <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1836">
           <caret line="110" column="18" lean-forward="false" selection-start-line="110" selection-start-column="18" selection-end-line="110" selection-end-column="18" />
           <folding>
@@ -393,12 +435,12 @@
           <caret line="29" column="26" lean-forward="true" selection-start-line="29" selection-start-column="26" selection-end-line="29" selection-end-column="26" />
           <folding>
             <element signature="e#0#12#0" expanded="true" />
-            <element signature="e#2598#3631#0" expanded="false" />
-            <element signature="e#3677#3978#0" expanded="false" />
-            <element signature="e#4052#4268#0" expanded="false" />
-            <element signature="e#4339#5467#0" expanded="false" />
-            <element signature="e#5518#5845#0" expanded="false" />
-            <element signature="e#5900#6993#0" expanded="false" />
+            <element signature="e#2625#3658#0" expanded="false" />
+            <element signature="e#3704#4005#0" expanded="false" />
+            <element signature="e#4079#4295#0" expanded="false" />
+            <element signature="e#4366#5494#0" expanded="false" />
+            <element signature="e#5545#5872#0" expanded="false" />
+            <element signature="e#5927#7020#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -430,6 +472,30 @@
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/T_cFinder.py" />
+    <entry file="file://$PROJECT_DIR$/../FindT_c/main.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="817">
+          <caret line="134" column="43" lean-forward="false" selection-start-line="134" selection-start-column="43" selection-end-line="134" selection-end-column="43" />
+          <folding>
+            <element signature="e#0#12#0" expanded="true" />
+            <element signature="e#2625#3658#0" expanded="false" />
+            <element signature="e#3704#4005#0" expanded="false" />
+            <element signature="e#4079#4295#0" expanded="false" />
+            <element signature="e#4366#5494#0" expanded="false" />
+            <element signature="e#5545#5872#0" expanded="false" />
+            <element signature="e#5927#7020#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Reach.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="476">
+          <caret line="28" column="38" lean-forward="true" selection-start-line="28" selection-start-column="38" selection-end-line="28" selection-end-column="38" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/GrainSize.pyt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="646">
@@ -438,36 +504,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Reach.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="15" column="12" lean-forward="true" selection-start-line="15" selection-start-column="12" selection-end-line="15" selection-end-column="12" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/GrainSize.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="52">
-          <caret line="217" column="22" lean-forward="true" selection-start-line="217" selection-start-column="22" selection-end-line="217" selection-end-column="22" />
+        <state relative-caret-position="834">
+          <caret line="268" column="60" lean-forward="true" selection-start-line="268" selection-start-column="60" selection-end-line="268" selection-end-column="60" />
           <folding>
             <element signature="e#597#609#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../FindT_c/main.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="358">
-          <caret line="42" column="28" lean-forward="false" selection-start-line="42" selection-start-column="28" selection-end-line="42" selection-end-column="28" />
-          <folding>
-            <element signature="e#0#12#0" expanded="true" />
-            <element signature="e#2598#3631#0" expanded="false" />
-            <element signature="e#3677#3978#0" expanded="false" />
-            <element signature="e#4052#4268#0" expanded="false" />
-            <element signature="e#4339#5467#0" expanded="false" />
-            <element signature="e#5518#5845#0" expanded="false" />
-            <element signature="e#5900#6993#0" expanded="false" />
           </folding>
         </state>
       </provider>

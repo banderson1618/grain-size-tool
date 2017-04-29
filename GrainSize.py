@@ -42,6 +42,11 @@ def main(dem,               # Path to the DEM file
         clippedStreamNetwork = tempData + "\clippedStreamNetwork.shp"
         arcpy.AddMessage("Clipping stream network...")
         arcpy.Clip_analysis(streamNetwork, huc10, clippedStreamNetwork)
+
+        #clippedDEM = tempData + "\clippedDEM.tif"
+        #arcpy.AddMessage("Clipping DEM...")
+        #arcpy.Clip_management(dem, huc10, clippedDEM)
+
     else:
         clippedStreamNetwork = streamNetwork
 
@@ -246,10 +251,10 @@ def writeResults(reachArray, testing, outputData):
 
 def writeOutput(reachArray, outputDataPath):
     arcpy.env.workspace = outputDataPath
-    outputShape = outputDataPath + "\UpperYakimaGrainSize.shp"
-    tempLayer = outputDataPath + "\UpperYakimaGrainSize_lyr"
-    outputLayer = outputDataPath + "\UpperYakimaGrainSize.lyr"
-    arcpy.CreateFeatureclass_management(outputDataPath, "UpperYakimaGrainSize.shp", "POLYLINE", "", "DISABLED", "DISABLED")
+    outputShape = outputDataPath + "\NorthUpperYakimaGrainSize.shp"
+    tempLayer = outputDataPath + "\NorthUpperYakimaGrainSize_lyr"
+    outputLayer = outputDataPath + "\NorthUpperYakimaGrainSize.lyr"
+    arcpy.CreateFeatureclass_management(outputDataPath, "NorthUpperYakimaGrainSize.shp", "POLYLINE", "", "DISABLED", "DISABLED")
     arcpy.AddField_management(outputShape, "GrainSize", "DOUBLE")
 
     insertCursor = arcpy.da.InsertCursor(outputShape, ["SHAPE@", "GrainSize"])
