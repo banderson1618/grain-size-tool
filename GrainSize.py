@@ -65,17 +65,18 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
     Reach object, which is then placed in an array"""
 
     reaches = []
+    numReaches = int(arcpy.GetCount_management(streamNetwork).getOutput(0))
+    numReachesString = str(numReaches)
+    arcpy.AddMessage("Reaches to calculate: " + numReachesString)
+    printEstimatedTime(numReaches)
+
     polylineCursor = arcpy.da.SearchCursor(streamNetwork, ['SHAPE@'])
     arcpy.AddMessage("Calculating Drainage Area...")
     flowDirection = arcpy.sa.FlowDirection(dem)
     flowAccumulation = arcpy.sa.FlowAccumulation(flowDirection)  # Calculates the flow accumulation to use in findWidth()
-    arcpy.AddMessage(type(flowAccumulation))
     cellSizeX = arcpy.GetRasterProperties_management(flowAccumulation, "CELLSIZEX")
     cellSizeY = arcpy.GetRasterProperties_management(flowAccumulation, "CELLSIZEY")
     cellSize = float(cellSizeX.getOutput(0)) * float(cellSizeY.getOutput(0))
-    arcpy.AddMessage(str(cellSize))
-    numReaches = int(arcpy.GetCount_management(streamNetwork).getOutput(0))
-    numReachesString = str(numReaches)
     arcpy.SetProgressor("step", "Creating Reach 1 out of " + numReachesString, 0, numReaches, 1)
 
     arcpy.AddMessage("Creating Reach Array...")
@@ -267,6 +268,13 @@ def writeOutput(reachArray, outputDataPath):
 
     arcpy.MakeFeatureLayer_management(outputShape, tempLayer)
     arcpy.SaveToLayerFile_management(tempLayer, outputLayer)
+
+
+def printEstimatedTime(numReaches):
+    totalSeconds = numReaches * 8
+    numHours = totalSeconds / 3600
+    numMinutes = (totalSeconds / 60) % 60
+    arcpy.AddMessage("Estimated time to complete: " + str(numHours) + " Hours, " + str(numMinutes) + " Minutes")
 
 
 if __name__ == '__main__':
