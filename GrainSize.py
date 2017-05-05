@@ -230,7 +230,7 @@ def findElevationAtPoint(dem, point, tempData):
 
 def writeResults(reachArray, testing, outputData):
     """This function is meant to save the results for future study"""
-    testOutput = open(outputData + "\Upper_Yakima_Data(readable).txt", "w")
+    testOutput = open(outputData + "\EastWallaWallaData(readable).txt", "w")
     i = 0
     for reach in reachArray:
         i += 1
@@ -241,7 +241,7 @@ def writeResults(reachArray, testing, outputData):
         testOutput.write("\nGrain Size: " + str(reach.grainSize) + "\n\n")
     testOutput.close()
 
-    inputDataFile = open(outputData + "Upper_Yakima_Data(for_reach_construction).txt", "w")
+    inputDataFile = open(outputData + "SouthWallaWalla(for_reach_construction).txt", "w")
     for reach in reachArray:
         inputDataFile.write("\n" + str(reach.width))
         inputDataFile.write("\n" + str(reach.q_2))
@@ -252,10 +252,10 @@ def writeResults(reachArray, testing, outputData):
 
 def writeOutput(reachArray, outputDataPath):
     arcpy.env.workspace = outputDataPath
-    outputShape = outputDataPath + "\NorthUpperYakimaGrainSize.shp"
-    tempLayer = outputDataPath + "\NorthUpperYakimaGrainSize_lyr"
-    outputLayer = outputDataPath + "\NorthUpperYakimaGrainSize.lyr"
-    arcpy.CreateFeatureclass_management(outputDataPath, "NorthUpperYakimaGrainSize.shp", "POLYLINE", "", "DISABLED", "DISABLED")
+    outputShape = outputDataPath + "\SouthWallaWallaGrainSize.shp"
+    tempLayer = outputDataPath + "\SouthWallaWallaGrainSize_lyr"
+    outputLayer = outputDataPath + "\SouthWallaWallaGrainSize.lyr"
+    arcpy.CreateFeatureclass_management(outputDataPath, "SouthWallaWallaGrainSize.shp", "POLYLINE", "", "DISABLED", "DISABLED")
     arcpy.AddField_management(outputShape, "GrainSize", "DOUBLE")
 
     insertCursor = arcpy.da.InsertCursor(outputShape, ["SHAPE@", "GrainSize"])
