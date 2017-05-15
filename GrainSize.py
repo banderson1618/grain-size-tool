@@ -72,6 +72,7 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
 
     polylineCursor = arcpy.da.SearchCursor(streamNetwork, ['SHAPE@'])
     arcpy.AddMessage("Calculating Drainage Area...")
+    dem = arcpy.sa.Fill(dem)
     flowDirection = arcpy.sa.FlowDirection(dem)
     flowAccumulation = arcpy.sa.FlowAccumulation(flowDirection)  # Calculates the flow accumulation to use in findWidth()
     cellSizeX = arcpy.GetRasterProperties_management(flowAccumulation, "CELLSIZEX")
@@ -173,7 +174,7 @@ def findSlope(polyline,firstPointElevation, secondPointElevation):
 def findFlowAccumulation(flowAccumulation, tempData, cellSize):
     """Because our stream network doesn't line up perfectly with our flow accumulation map, we need to create a
          buffer and search in that buffer for the max flow accumulation using Zonal Statistics"""
-    arcpy.Buffer_analysis(tempData + "\point.shp", tempData + "\pointBuffer.shp", "20 Meters")
+    arcpy.Buffer_analysis(tempData + "\point.shp", tempData + "\pointBuffer.shp", "40 Meters")
     arcpy.PolygonToRaster_conversion(tempData + "\pointBuffer.shp", "FID", tempData + "\pointBufferRaster.tif",
                                      cellsize=10)
     maxFlow = arcpy.sa.ZonalStatistics(tempData + "\pointBufferRaster.tif", "Value", flowAccumulation, "MAXIMUM")

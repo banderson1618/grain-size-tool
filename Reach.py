@@ -12,8 +12,9 @@ class Reach(object):
         self.slope = slope
         self.polyline = polyline
 
-    grainSize = -1
-    t_c = -1
+        self.grainSize = -1
+        self.t_c = -1
+        self.flowAccumulation = -1
 
     def calculateGrainSize(self, n, t_c):
         self.grainSize = (n**.6) * (self.q_2**.6) * (self.width**-.6) * (self.slope ** .7)
@@ -23,8 +24,12 @@ class Reach(object):
 
     def calculateT_c(self, n):
         self.t_c = (n**.6) * (self.q_2**.6) * (self.width**-.6) * (self.slope ** .7)
-        self.grainSize /= self.grainSize * 1000     # I think this should take care of the conversion, not sure though
-        self.grainSize /= 1.65
+        self.t_c /= 1.65
+        self.t_c *= 1000
+        self.t_c /= self.grainSize
+
+    def setFlowAccumulation(self, flowAccumulation):
+        self.flowAccumulation = flowAccumulation
 
     def setGrainSize(self, grainSize):
         self.grainSize = grainSize
