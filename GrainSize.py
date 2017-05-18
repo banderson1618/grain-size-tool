@@ -11,6 +11,7 @@
 import arcpy
 import os
 from Reach import Reach
+from math import sqrt
 
 
 def main(dem,               # Path to the DEM file
@@ -26,6 +27,8 @@ def main(dem,               # Path to the DEM file
     arcpy.CheckOutExtension("Spatial")  # We'll be using a bunch of spatial analysis tools
 
     testing = False  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
+    if testing:
+        arcpy.AddMessage("TESTING")
 
     """Creates the temporary data folder, where we'll put all our intermediate results"""
     if not os.path.exists(outputFolder+"\\temporaryData"):
@@ -42,11 +45,6 @@ def main(dem,               # Path to the DEM file
         clippedStreamNetwork = tempData + "\clippedStreamNetwork.shp"
         arcpy.AddMessage("Clipping stream network...")
         arcpy.Clip_analysis(streamNetwork, huc10, clippedStreamNetwork)
-
-        #clippedDEM = tempData + "\clippedDEM.tif"
-        #arcpy.AddMessage("Clipping DEM...")
-        #arcpy.Clip_management(dem, huc10, clippedDEM)
-
     else:
         clippedStreamNetwork = streamNetwork
 
@@ -85,12 +83,17 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
     """If testing, only go through the loop once. Otherwise, go through every reach"""
     if testing:
         for i in range(10):
+            arcpy.AddMessage("Creating Reach " + str(i+1) + "out of 10")
             row = polylineCursor.next()
+            arcpy.AddMessage("Calculating Slope...")
             lastPointElevation = findElevationAtPoint(dem, row[0].lastPoint, tempData)
             firstPointElevation = findElevationAtPoint(dem, row[0].firstPoint, tempData)
+            arcpy.AddMessage("Calculating Flow Accumulation...")
             flowAccAtPoint = findFlowAccumulation(flowAccumulation, tempData, cellSize)
+            arcpy.AddMessage("Calculating Precipitation...")
             precip = findPrecipitation(precipMap, tempData)
 
+            arcpy.AddMessage("Finding Variables...")
             slope = findSlope(row, firstPointElevation, lastPointElevation)
             width = findWidth(flowAccAtPoint, precip)
             q_2 = findQ_2(flowAccAtPoint, precip, regionNumber)
@@ -99,6 +102,7 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
             reach.calculateGrainSize(nValue, t_cValue)
 
             reaches.append(reach)
+            arcpy.AddMessage("Reach " + str(i+1) + " complete.")
     else:
         i = 0
         for row in polylineCursor:
@@ -147,8 +151,10 @@ def findQ_2(flowAccAtPoint, precip, regionNumber):
         q_2 = 8.77 * (flowAccAtPoint**0.629)
     elif regionNumber == 8:
         q_2 = 12.0 * (flowAccAtPoint**0.761)
+    elif regionNumber == 10:
+        q_2 = 0.334 * (flowAccAtPoint**0.963)
     else:
-        q_2 = 0.803 * (flowAccAtPoint**0.672) * (precip ** 1.16)
+        arcpy.Addmessage("Incorrect Q_2 value entered")
 
     q_2 /= 35.3147  # converts from cubic feet to cubic meters
 
@@ -174,9 +180,9 @@ def findSlope(polyline,firstPointElevation, secondPointElevation):
 def findFlowAccumulation(flowAccumulation, tempData, cellSize):
     """Because our stream network doesn't line up perfectly with our flow accumulation map, we need to create a
          buffer and search in that buffer for the max flow accumulation using Zonal Statistics"""
-    arcpy.Buffer_analysis(tempData + "\point.shp", tempData + "\pointBuffer.shp", "40 Meters")
+    arcpy.Buffer_analysis(tempData + "\point.shp", tempData + "\pointBuffer.shp", "20 Meters")
     arcpy.PolygonToRaster_conversion(tempData + "\pointBuffer.shp", "FID", tempData + "\pointBufferRaster.tif",
-                                     cellsize=10)
+                                     cellsize=sqrt(cellSize))
     maxFlow = arcpy.sa.ZonalStatistics(tempData + "\pointBufferRaster.tif", "Value", flowAccumulation, "MAXIMUM")
     arcpy.sa.ExtractValuesToPoints(tempData + "\point.shp", maxFlow, tempData + "\\flowPoint")
 
@@ -272,7 +278,7 @@ def writeOutput(reachArray, outputDataPath):
 
 
 def printEstimatedTime(numReaches):
-    totalSeconds = numReaches * 8
+    totalSeconds = numReaches * 11
     numHours = totalSeconds / 3600
     numMinutes = (totalSeconds / 60) % 60
     arcpy.AddMessage("Estimated time to complete: " + str(numHours) + " Hours, " + str(numMinutes) + " Minutes")
