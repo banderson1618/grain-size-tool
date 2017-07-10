@@ -151,10 +151,12 @@ def findQ_2(flowAccAtPoint, precip, regionNumber):
         q_2 = 8.77 * (flowAccAtPoint**0.629)
     elif regionNumber == 8:
         q_2 = 12.0 * (flowAccAtPoint**0.761)
+    elif regionNumber == 9:
+        q_2 = 0.803 * (flowAccAtPoint**0.672) * (precip ** 1.16)
     elif regionNumber == 10:
         q_2 = 0.334 * (flowAccAtPoint**0.963)
     else:
-        arcpy.Addmessage("Incorrect Q_2 value entered")
+        arcpy.AddError("Incorrect Q_2 value entered")
 
     q_2 /= 35.3147  # converts from cubic feet to cubic meters
 
