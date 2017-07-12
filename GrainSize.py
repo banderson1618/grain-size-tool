@@ -26,7 +26,7 @@ def main(dem,               # Path to the DEM file
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")  # We'll be using a bunch of spatial analysis tools
 
-    testing = False  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
+    testing = True  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
     if testing:
         arcpy.AddMessage("TESTING")
 
@@ -220,9 +220,9 @@ def findElevationAtPoint(dem, point, tempData):
     to Points tool, then using a search cursor to get the elevation data. It's a mess, and it's inefficient, but it
     works. If anyone can find a better way, email me at banderson1618@gmail.com
     """
-    sr = arcpy.Describe(dem).spatialReference
+    #sr = arcpy.Describe(dem).spatialReference
     arcpy.env.workspace = tempData
-    arcpy.CreateFeatureclass_management(tempData, "point.shp", "POINT", "", "DISABLED", "DISABLED", sr)
+    arcpy.CreateFeatureclass_management(tempData, "point.shp", "POINT", "", "DISABLED", "DISABLED")#, sr)
     cursor = arcpy.da.InsertCursor(tempData+"\point.shp", ["SHAPE@"])
     cursor.insertRow([point])
     del cursor
