@@ -66,7 +66,7 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
     numReaches = int(arcpy.GetCount_management(streamNetwork).getOutput(0))
     numReachesString = str(numReaches)
     arcpy.AddMessage("Reaches to calculate: " + numReachesString)
-    printEstimatedTime(numReaches)
+    #printEstimatedTime(numReaches)
 
     polylineCursor = arcpy.da.SearchCursor(streamNetwork, ['SHAPE@'])
     arcpy.AddMessage("Calculating Drainage Area...")
