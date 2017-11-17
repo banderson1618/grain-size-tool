@@ -14,15 +14,26 @@ from Reach import Reach
 from math import sqrt
 
 
-def main(dem,               # Path to the DEM file
-         streamNetwork,     # Path to the stream network file
-         precipMap,         # Path to the precipitation map file
-         huc10,             # Path to the polygon of our HUC10 region
-         outputFolder,      # Path to where we want to store our output
-         nValue,            # Our Manning coefficient
-         t_cValue,          # Our torque value
-         regionNumber):     # Which region we use for our Q2 equation
-    """Source code for our tool"""
+def main(dem,
+         streamNetwork,
+         precipMap,
+         huc10,
+         outputFolder,
+         nValue,
+         t_cValue,
+         regionNumber):
+    """
+    Our main function
+    :param dem: The path to a DEM file
+    :param streamNetwork: The path to a .shp file that contains our stream network
+    :param precipMap: The path to a .shp file that contains polygons that have precipitation data
+    :param huc10: The region that our stream network will be clipped to
+    :param outputFolder: Where we want to put our output
+    :param nValue: What value we use for our Manning coefficient. Important for our equation
+    :param t_cValue: What value we use for our Shields stress coefficient. Important for our equation
+    :param regionNumber: What region we use to calculate our Q_2 value
+    :return: None
+    """
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")  # We'll be using a bunch of spatial analysis tools
 
@@ -66,7 +77,6 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
     numReaches = int(arcpy.GetCount_management(streamNetwork).getOutput(0))
     numReachesString = str(numReaches)
     arcpy.AddMessage("Reaches to calculate: " + numReachesString)
-    #printEstimatedTime(numReaches)
 
     polylineCursor = arcpy.da.SearchCursor(streamNetwork, ['SHAPE@'])
     arcpy.AddMessage("Calculating Drainage Area...")
@@ -277,13 +287,6 @@ def writeOutput(reachArray, outputDataPath):
 
     arcpy.MakeFeatureLayer_management(outputShape, tempLayer)
     arcpy.SaveToLayerFile_management(tempLayer, outputLayer)
-
-
-def printEstimatedTime(numReaches):
-    totalSeconds = numReaches * 11
-    numHours = totalSeconds / 3600
-    numMinutes = (totalSeconds / 60) % 60
-    arcpy.AddMessage("Estimated time to complete: " + str(numHours) + " Hours, " + str(numMinutes) + " Minutes")
 
 
 if __name__ == '__main__':
