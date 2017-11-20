@@ -37,7 +37,7 @@ def main(dem,
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")  # We'll be using a bunch of spatial analysis tools
 
-    testing = True  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
+    testing = False  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
     if testing:
         arcpy.AddMessage("TESTING")
 
@@ -70,15 +70,26 @@ def main(dem,
 
 
 def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, nValue, t_cValue):
-    """Goes through every reach in the stream network, calculates its width and Q_2 value, and stores that data in a
-    Reach object, which is then placed in an array"""
+    """
+    Goes through every reach in the stream network, calculates its width and Q_2 value, and stores that data in a
+    Reach object, which is then placed in an array
+    :param testing: Bool, tells ushether or not we want to only do a small number of reaches for testing purposes.
+    :param streamNetwork: The path to a .shp file that contains our stream network
+    :param precipMap: The path to a .shp file that contains polygons that have precipitation data
+    :param regionNumber: What region we use to calculate our Q_2 value
+    :param tempData: Where we're going to put our temp data, because ArcGIS can't give us an easy way to get data from
+    a raster at a point
+    :param nValue: Our Manning coefficient
+    :param t_cValue: Our Shields critical value
+    :return: An array of reaches, with a calculated Grain size for each
+    """
 
     reaches = []
     numReaches = int(arcpy.GetCount_management(streamNetwork).getOutput(0))
     numReachesString = str(numReaches)
     arcpy.AddMessage("Reaches to calculate: " + numReachesString)
 
-    polylineCursor = arcpy.da.SearchCursor(streamNetwork, ['SHAPE@'])
+
     arcpy.AddMessage("Calculating Drainage Area...")
     dem = arcpy.sa.Fill(dem)
     flowDirection = arcpy.sa.FlowDirection(dem)
@@ -89,6 +100,7 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
     arcpy.SetProgressor("step", "Creating Reach 1 out of " + numReachesString, 0, numReaches, 1)
 
     arcpy.AddMessage("Creating Reach Array...")
+    polylineCursor = arcpy.da.SearchCursor(streamNetwork, ['SHAPE@'])
 
     """If testing, only go through the loop once. Otherwise, go through every reach"""
     if testing:
@@ -98,10 +110,10 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
             arcpy.AddMessage("Calculating Slope...")
             lastPointElevation = findElevationAtPoint(dem, row[0].lastPoint, tempData)
             firstPointElevation = findElevationAtPoint(dem, row[0].firstPoint, tempData)
+            arcpy.AddMessage("Calculating Precipitation...")
+            precip = findPrecipitation(precipMap, tempData, row[0].lastPoint)
             arcpy.AddMessage("Calculating Flow Accumulation...")
             flowAccAtPoint = findFlowAccumulation(flowAccumulation, tempData, cellSize)
-            arcpy.AddMessage("Calculating Precipitation...")
-            precip = findPrecipitation(precipMap, tempData)
 
             arcpy.AddMessage("Finding Variables...")
             slope = findSlope(row, firstPointElevation, lastPointElevation)
@@ -118,8 +130,8 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
         for row in polylineCursor:
             lastPointElevation = findElevationAtPoint(dem, row[0].lastPoint, tempData)
             firstPointElevation = findElevationAtPoint(dem, row[0].firstPoint, tempData)
+            precip = findPrecipitation(precipMap, tempData, row[0].lastPoint)
             flowAccAtPoint = findFlowAccumulation(flowAccumulation, tempData, cellSize)
-            precip = findPrecipitation(precipMap, tempData)
 
             slope = findSlope(row, firstPointElevation, lastPointElevation)
             width = findWidth(flowAccAtPoint, precip)
@@ -142,7 +154,13 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
 
 
 def findQ_2(flowAccAtPoint, precip, regionNumber):
-    """Returns the value of a two year flood event"""
+    """
+    Returns the value of a two year flood event
+    :param flowAccAtPoint: A float with flow accumulation at a point
+    :param precip: A float with the precipitation at a point
+    :param regionNumber: What region of Washington we're in. See the link in the comment below
+    :return: Q_2 (float)
+    """
     """These equations are based on the USGS database. To find your region, go to the following website:
     https://pubs.usgs.gov/fs/fs-016-01/ """
     if regionNumber == 1:
@@ -174,24 +192,39 @@ def findQ_2(flowAccAtPoint, precip, regionNumber):
 
 
 def findWidth(flowAccAtPoint, precip):
-    """Estimates the width of a reach, based on its drainage area and precipitation levels"""
+    """
+    Estimates the width of a reach, based on its drainage area and precipitation levels
+    :param flowAccAtPoint: A float with flow accumulation at a point
+    :param precip: A float with the precipitation at a point
+    :return: Estimated width
+    """
     width = 0.177 * (flowAccAtPoint ** 0.397) * (precip ** 0.453)  # This is the equation we're using to estimate width
     if width < .3:  # establishes a minimum width value
         width = .3
     return width
 
 
-def findSlope(polyline,firstPointElevation, secondPointElevation):
-    """Finds the average slope of the reach in question"""
+def findSlope(polyline, firstPointElevation, secondPointElevation):
+    """
+    Finds the average slope of the reach in question, given two elevations
+    :param polyline: Used to find the length
+    :param firstPointElevation: A float that has elevation data
+    :param secondPointElevation: Another float that has elevation data
+    :return: slope
+    """
     length = polyline[0].length
     elevationDifference = abs(firstPointElevation - secondPointElevation)
-    slope = elevationDifference/length
-    return slope
+    return elevationDifference/length
 
 
 def findFlowAccumulation(flowAccumulation, tempData, cellSize):
-    """Because our stream network doesn't line up perfectly with our flow accumulation map, we need to create a
-         buffer and search in that buffer for the max flow accumulation using Zonal Statistics"""
+    """
+    Finds the flow accumulation at the point defined in the findPrecipitation function
+    :param flowAccumulation: A raster containing flow accumulation data
+    :param tempData: Where we can dump all our intermediary data points
+    :param cellSize: The area of each cell
+    :return: Flow accumulation at a point
+    """
     arcpy.Buffer_analysis(tempData + "\point.shp", tempData + "\pointBuffer.shp", "20 Meters")
     arcpy.PolygonToRaster_conversion(tempData + "\pointBuffer.shp", "FID", tempData + "\pointBufferRaster.tif",
                                      cellsize=sqrt(cellSize))
@@ -211,7 +244,21 @@ def findFlowAccumulation(flowAccumulation, tempData, cellSize):
     return flowAccAtPoint
 
 
-def findPrecipitation(precipMap, tempData):
+def findPrecipitation(precipMap, tempData, point):
+    """
+    Finds the precipitation at a point
+    :param precipMap: A feature class that has precipitation data at a point
+    :param tempData: Where we dump our intermediary files
+    :param point: Where we want to find precipitation
+    :return: Precipitation
+    """
+    sr = arcpy.Describe(precipMap).spatialReference
+    arcpy.env.workspace = tempData
+    arcpy.CreateFeatureclass_management(tempData, "point.shp", "POINT", "", "DISABLED", "DISABLED", sr)
+    cursor = arcpy.da.InsertCursor(tempData + "\point.shp", ["SHAPE@"])
+    cursor.insertRow([point])
+    del cursor
+
     pointLayer = tempData + "\point.shp"
     arcpy.Intersect_analysis([pointLayer, precipMap], "precipPoint")
     searchCursor = arcpy.da.SearchCursor(tempData + "\precipPoint.shp", "Inches")
@@ -223,12 +270,20 @@ def findPrecipitation(precipMap, tempData):
 
 
 def findElevationAtPoint(dem, point, tempData):
-    """Finds the elevation at a certain point based on a DEM"""
+    """
+    Finds the elevation at a certain point based on a DEM
+    :param dem: Path to the DEM
+    :param point: The ArcPy Point that we want to find the elevation at
+    :param tempData: Where we can dump all our random data points
+    :return: Elevation at a point
+    """
     """
     I can't find a good way to just pull the data straight from the raster, so instead, we're having to
     create the point in a layer of its own, then create another layer that has the elevation using the Extract Value
     to Points tool, then using a search cursor to get the elevation data. It's a mess, and it's inefficient, but it
     works. If anyone can find a better way, email me at banderson1618@gmail.com
+    
+    Testing new feature
     """
     sr = arcpy.Describe(dem).spatialReference
     arcpy.env.workspace = tempData
@@ -243,8 +298,8 @@ def findElevationAtPoint(dem, point, tempData):
     elevation = row[0]
     del searchCursor
     del row
-
     return elevation
+    # return float(arcpy.GetCellValue_management(dem, str(point.X) + " " + str(point.Y)).getOutput(0))
 
 
 def writeResults(reachArray, testing, outputData):
