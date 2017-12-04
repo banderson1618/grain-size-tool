@@ -37,7 +37,7 @@ def main(dem,
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")  # We'll be using a bunch of spatial analysis tools
 
-    testing = False  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
+    testing = True  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
     if testing:
         arcpy.AddMessage("TESTING")
 
@@ -105,7 +105,7 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
     """If testing, only go through the loop once. Otherwise, go through every reach"""
     if testing:
         for i in range(10):
-            arcpy.AddMessage("Creating Reach " + str(i+1) + "out of 10")
+            arcpy.AddMessage("Creating Reach " + str(i+1) + " out of 10")
             row = polylineCursor.next()
             arcpy.AddMessage("Calculating Slope...")
             lastPointElevation = findElevationAtPoint(dem, row[0].lastPoint, tempData)
@@ -118,7 +118,7 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
             arcpy.AddMessage("Finding Variables...")
             slope = findSlope(row, firstPointElevation, lastPointElevation)
             width = findWidth(flowAccAtPoint, precip)
-            q_2 = findQ_2(flowAccAtPoint, precip, regionNumber)
+            q_2 = findQ_2(flowAccAtPoint, firstPointElevation, precip, regionNumber, tempData)
 
             reach = Reach(width, q_2, slope, row[0])
             reach.calculateGrainSize(nValue, t_cValue)
@@ -135,7 +135,7 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
 
             slope = findSlope(row, firstPointElevation, lastPointElevation)
             width = findWidth(flowAccAtPoint, precip)
-            q_2 = findQ_2(flowAccAtPoint, precip, regionNumber)
+            q_2 = findQ_2(flowAccAtPoint, firstPointElevation, precip, regionNumber, tempData)
 
             reach = Reach(width, q_2, slope, row[0])
             reach.calculateGrainSize(nValue, t_cValue)
@@ -153,7 +153,19 @@ def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, 
     return reaches
 
 
-def findQ_2(flowAccAtPoint, precip, regionNumber):
+def getMinJanTemp(tempData):
+    minJanTempMap = "C:\Users\A02150284\Documents\GIS Data\JanMinTemp\PRISM_tmin_30yr_normal_800mM2_01_asc.asc"
+    pointLayer = tempData + "\pointJanTemp"
+    arcpy.sa.ExtractValuesToPoints(tempData + "\point.shp", minJanTempMap, pointLayer)
+    searchCursor = arcpy.da.SearchCursor(pointLayer + ".shp", "RASTERVALU")
+    row = searchCursor.next()
+    minJanTemp = row[0]
+    del searchCursor
+    del row
+    return minJanTemp
+
+
+def findQ_2(flowAccAtPoint, elevation, precip, regionNumber, tempData):
     """
     Returns the value of a two year flood event
     :param flowAccAtPoint: A float with flow accumulation at a point
@@ -181,8 +193,9 @@ def findQ_2(flowAccAtPoint, precip, regionNumber):
         q_2 = 12.0 * (flowAccAtPoint**0.761)
     elif regionNumber == 9:
         q_2 = 0.803 * (flowAccAtPoint**0.672) * (precip ** 1.16)
-    elif regionNumber == 10:
-        q_2 = 0.334 * (flowAccAtPoint**0.963)
+    elif regionNumber == 100:
+        minJanTemp = getMinJanTemp(tempData)
+        q_2 = .00013 * (flowAccAtPoint**0.8) * (precip ** 1.24) * (minJanTemp ** 2.53)
     else:
         arcpy.AddError("Incorrect Q_2 value entered")
 
