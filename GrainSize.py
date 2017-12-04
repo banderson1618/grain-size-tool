@@ -47,9 +47,9 @@ def main(dem,
     tempData = outputFolder + "\\temporaryData"
 
     """Creates our output folder, where we'll put our final results"""
-    if not os.path.exists(outputFolder+"\outputData"):
-        os.makedirs(outputFolder+"\outputData")
-    outputDataPath = outputFolder+"\outputData"
+    if not os.path.exists(outputFolder+"\GrainSize"):
+        os.makedirs(outputFolder+"\GrainSize")
+    outputDataPath = outputFolder+"\GrainSize"
 
     """Clips our stream network to a HUC10 region"""
     if huc10 != None:
@@ -252,13 +252,14 @@ def findPrecipitation(precipMap, tempData, point):
     :param point: Where we want to find precipitation
     :return: Precipitation
     """
+    """
     sr = arcpy.Describe(precipMap).spatialReference
     arcpy.env.workspace = tempData
     arcpy.CreateFeatureclass_management(tempData, "point.shp", "POINT", "", "DISABLED", "DISABLED", sr)
     cursor = arcpy.da.InsertCursor(tempData + "\point.shp", ["SHAPE@"])
     cursor.insertRow([point])
     del cursor
-
+    """
     pointLayer = tempData + "\point.shp"
     arcpy.Intersect_analysis([pointLayer, precipMap], "precipPoint")
     searchCursor = arcpy.da.SearchCursor(tempData + "\precipPoint.shp", "Inches")
@@ -299,6 +300,7 @@ def findElevationAtPoint(dem, point, tempData):
     del searchCursor
     del row
     return elevation
+
     # return float(arcpy.GetCellValue_management(dem, str(point.X) + " " + str(point.Y)).getOutput(0))
 
 
