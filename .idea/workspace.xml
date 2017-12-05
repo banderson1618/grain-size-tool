@@ -23,8 +23,8 @@
       <file leaf-file-name="GrainSize.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/GrainSize.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="493">
-              <caret line="185" column="27" lean-forward="true" selection-start-line="185" selection-start-column="27" selection-end-line="185" selection-end-column="27" />
+            <state relative-caret-position="136">
+              <caret line="155" column="0" lean-forward="false" selection-start-line="155" selection-start-column="0" selection-end-line="211" selection-end-column="14" />
               <folding>
                 <element signature="e#595#607#0" expanded="true" />
               </folding>
@@ -335,7 +335,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="1912" y="-8" width="1936" height="1176" extended-state="7" />
+    <frame x="1912" y="-8" width="1936" height="1176" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.18020834" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -705,8 +705,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/GrainSize.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="493">
-          <caret line="185" column="27" lean-forward="true" selection-start-line="185" selection-start-column="27" selection-end-line="185" selection-end-column="27" />
+        <state relative-caret-position="136">
+          <caret line="155" column="0" lean-forward="false" selection-start-line="155" selection-start-column="0" selection-end-line="211" selection-end-column="14" />
           <folding>
             <element signature="e#595#607#0" expanded="true" />
           </folding>

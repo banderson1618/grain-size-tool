@@ -193,6 +193,14 @@ def findQ_2(flowAccAtPoint, elevation, precip, regionNumber, tempData):
         q_2 = 12.0 * (flowAccAtPoint**0.761)
     elif regionNumber == 9:
         q_2 = 0.803 * (flowAccAtPoint**0.672) * (precip ** 1.16)
+    elif regionNumber == 12:
+        q_2 = 0.508 * (flowAccAtPoint ** 0.901) * ((elevation / 1000)**0.132) * (precip ** 0.926)
+    elif regionNumber == 14:
+        q_2 = 9.49 * (flowAccAtPoint ** 0.903) * ((elevation / 1000)**0.055)
+    elif regionNumber == 15:
+        q_2 = 9.49 * (flowAccAtPoint ** 0.903) * ((elevation / 1000)**0.055)
+    elif regionNumber == 16:
+        q_2 = 0.000141 * (flowAccAtPoint ** 0.904) * (precip ** 3.25)
     elif regionNumber == 100:
         minJanTemp = getMinJanTemp(tempData)
         q_2 = .00013 * (flowAccAtPoint**0.8) * (precip ** 1.24) * (minJanTemp ** 2.53)
