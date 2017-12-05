@@ -37,7 +37,7 @@ def main(dem,
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")  # We'll be using a bunch of spatial analysis tools
 
-    testing = True  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
+    testing = False  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
     if testing:
         arcpy.AddMessage("TESTING")
 
