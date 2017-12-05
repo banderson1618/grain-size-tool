@@ -195,6 +195,8 @@ def findQ_2(flowAccAtPoint, elevation, precip, regionNumber, tempData):
         q_2 = 0.803 * (flowAccAtPoint**0.672) * (precip ** 1.16)
     elif regionNumber == 12:
         q_2 = 0.508 * (flowAccAtPoint ** 0.901) * ((elevation / 1000)**0.132) * (precip ** 0.926)
+    elif regionNumber == 13:
+        q_2 = 12.6 * (flowAccAtPoint ** 0.879) * ((elevation / 1000) ** -0.161)
     elif regionNumber == 14:
         q_2 = 9.49 * (flowAccAtPoint ** 0.903) * ((elevation / 1000)**0.055)
     elif regionNumber == 15:
