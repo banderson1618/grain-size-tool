@@ -10,7 +10,7 @@
 
 import arcpy
 import os
-from Reach import Reach
+from GrainSizeReach import Reach
 from math import sqrt
 
 
@@ -205,7 +205,7 @@ def findQ_2(flowAccAtPoint, elevation, precip, regionNumber, tempData):
         q_2 = 0.000141 * (flowAccAtPoint ** 0.904) * (precip ** 3.25)
     elif regionNumber == 100:
         minJanTemp = getMinJanTemp(tempData)
-        q_2 = .00013 * (flowAccAtPoint**0.8) * (precip ** 1.24) * (minJanTemp ** 2.53)
+        q_2 = .00013 * (flowAccAtPoint**0.8) * (precip ** 1.24) * ((minJanTemp + 273) ** 2.53)
     else:
         arcpy.AddError("Incorrect Q_2 value entered")
 
