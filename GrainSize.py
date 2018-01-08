@@ -144,8 +144,6 @@ def makeReaches(testing, dem, flowAccumulation, streamNetwork, precipMap, region
             reach.calculateGrainSize(nValue, t_cValue)
 
             reaches.append(reach)
-            arcpy.AddMessage("Creating Reach " + str(i) + " out of " + numReachesString + " (" +
-                             str((float(i)/float(numReaches))*100) + "% complete)")
 
             i += 1
             arcpy.SetProgressorLabel("Creating Reach " + str(i) + " out of " + numReachesString)
