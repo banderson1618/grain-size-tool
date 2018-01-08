@@ -92,10 +92,11 @@ def makeReaches(testing, dem, flowAccumulation, streamNetwork, precipMap, region
     arcpy.AddMessage("Reaches to calculate: " + numReachesString)
 
 
-    arcpy.AddMessage("Calculating Drainage Area...")
-    dem = arcpy.sa.Fill(dem)
-    flowDirection = arcpy.sa.FlowDirection(dem)
-    flowAccumulation = arcpy.sa.FlowAccumulation(flowDirection)  # Calculates the flow accumulation to use in findWidth()
+    if flowAccumulation == None:
+        arcpy.AddMessage("Calculating Drainage Area...")
+        filledDEM = arcpy.sa.Fill(dem)
+        flowDirection = arcpy.sa.FlowDirection(filledDEM)
+        flowAccumulation = arcpy.sa.FlowAccumulation(flowDirection)
     cellSizeX = arcpy.GetRasterProperties_management(flowAccumulation, "CELLSIZEX")
     cellSizeY = arcpy.GetRasterProperties_management(flowAccumulation, "CELLSIZEY")
     cellSize = float(cellSizeX.getOutput(0)) * float(cellSizeY.getOutput(0))
@@ -143,9 +144,12 @@ def makeReaches(testing, dem, flowAccumulation, streamNetwork, precipMap, region
             reach.calculateGrainSize(nValue, t_cValue)
 
             reaches.append(reach)
-            i += 1
             arcpy.AddMessage("Creating Reach " + str(i) + " out of " + numReachesString + " (" +
                              str((float(i)/float(numReaches))*100) + "% complete)")
+
+            i += 1
+            arcpy.SetProgressorLabel("Creating Reach " + str(i) + " out of " + numReachesString)
+            arcpy.SetProgressorPosition()
 
     del row
     del polylineCursor
