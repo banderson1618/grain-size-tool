@@ -15,6 +15,7 @@ from math import sqrt
 
 
 def main(dem,
+         flowAccumulation,
          streamNetwork,
          precipMap,
          huc10,
@@ -60,7 +61,8 @@ def main(dem,
         clippedStreamNetwork = streamNetwork
 
     """Makes the reaches"""
-    reachArray = makeReaches(testing, dem, clippedStreamNetwork, precipMap, regionNumber, tempData, nValue, t_cValue)
+    reachArray = makeReaches(testing, dem, flowAccumulation, clippedStreamNetwork, precipMap, regionNumber, tempData,
+                             nValue, t_cValue)
 
     """Writes our output to a folder"""
     writeOutput(reachArray, outputDataPath)
@@ -69,7 +71,7 @@ def main(dem,
     writeResults(reachArray, testing, outputDataPath)
 
 
-def makeReaches(testing, dem, streamNetwork, precipMap, regionNumber, tempData, nValue, t_cValue):
+def makeReaches(testing, dem, flowAccumulation, streamNetwork, precipMap, regionNumber, tempData, nValue, t_cValue):
     """
     Goes through every reach in the stream network, calculates its width and Q_2 value, and stores that data in a
     Reach object, which is then placed in an array

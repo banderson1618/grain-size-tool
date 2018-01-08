@@ -31,6 +31,14 @@ class GrainSizeTool(object):
             multiValue=False)
 
         param1 = arcpy.Parameter(
+            displayName = "Flow Accumulation",
+            name = "flowAccumulation",
+            datatype = "DERasterDataset",
+            parameterType = "Optional",
+            direction = "Input",
+            multiValue=False)
+
+        param2 = arcpy.Parameter(
             displayName = "Stream Network",
             name = "streamNetwork",
             datatype = "DEFeatureClass",
@@ -38,7 +46,7 @@ class GrainSizeTool(object):
             direction = "Input",
             multiValue=False)
 
-        param2 = arcpy.Parameter(
+        param3 = arcpy.Parameter(
             displayName = "Precipitation",
             name = "precipMap",
             datatype = "DEFeatureClass",
@@ -46,7 +54,7 @@ class GrainSizeTool(object):
             direction = "Input",
             multiValue=False)
 
-        param3 = arcpy.Parameter(
+        param4 = arcpy.Parameter(
             displayName = "HUC 10 Boundary",
             name = "huc10",
             datatype = "DEFeatureClass",
@@ -54,7 +62,7 @@ class GrainSizeTool(object):
             direction = "Input",
             multiValue=False)
 
-        param4 = arcpy.Parameter(
+        param5 = arcpy.Parameter(
             displayName = "Output Files Folder",
             name = "scratchWorkspace",
             datatype = "DEFolder",
@@ -62,7 +70,7 @@ class GrainSizeTool(object):
             direction = "Input",
             multiValue=False)
 
-        param5 = arcpy.Parameter(
+        param6 = arcpy.Parameter(
             displayName = "n Value",
             name = "givenN",
             datatype = "GPDouble",
@@ -70,7 +78,7 @@ class GrainSizeTool(object):
             direction = "Input",
             multiValue=False)
 
-        param6 = arcpy.Parameter(
+        param7 = arcpy.Parameter(
             displayName = "t_c Value",
             name = "givenT_C",
             datatype = "GPDouble",
@@ -78,7 +86,7 @@ class GrainSizeTool(object):
             direction = "Input",
             multiValue=False)
 
-        param7 = arcpy.Parameter(
+        param8 = arcpy.Parameter(
             displayName = "Region Number",
             name = "regionNumber",
             datatype = "GPLong",
@@ -86,7 +94,7 @@ class GrainSizeTool(object):
             direction = "Input",
             multiValue=False)
 
-        params = [param0, param1, param2, param3, param4, param5, param6, param7]
+        params = [param0, param1, param2, param3, param4, param5, param6, param7, param8]
         return params
 
     def isLicensed(self):
@@ -111,7 +119,8 @@ class GrainSizeTool(object):
          parameters[2].valueAsText,
          parameters[3].valueAsText,
          parameters[4].valueAsText,
-         parameters[5].value,
+         parameters[5].valueAsText,
          parameters[6].value,
-         parameters[7].value)
+         parameters[7].value,
+         parameters[8].value)
         return
