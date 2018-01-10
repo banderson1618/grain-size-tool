@@ -94,6 +94,14 @@ class GrainSizeTool(object):
             direction = "Input",
             multiValue=False)
 
+        param9 = arcpy.Parameter(
+            displayName = "Testing",
+            name = "testing",
+            datatype = "GPBoolean",
+            parameterType = "Required",
+            direction = "Input",
+            multiValue = False)
+
         params = [param0, param1, param2, param3, param4, param5, param6, param7, param8]
         return params
 
@@ -122,5 +130,6 @@ class GrainSizeTool(object):
          parameters[5].valueAsText,
          parameters[6].value,
          parameters[7].value,
-         parameters[8].value)
+         parameters[8].value,
+         parameters[9].value)
         return

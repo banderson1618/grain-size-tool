@@ -18,11 +18,12 @@ def main(dem,
          flowAccumulation,
          streamNetwork,
          precipMap,
-         huc10,
+         clippingRegion,
          outputFolder,
          nValue,
          t_cValue,
-         regionNumber):
+         regionNumber,
+         testing):
     """
     Our main function
     :param dem: The path to a DEM file
@@ -35,10 +36,10 @@ def main(dem,
     :param regionNumber: What region we use to calculate our Q_2 value
     :return: None
     """
+    # TODO Implement projection checks. Look into sr.abbreviation, sr.alias,
     arcpy.env.overwriteOutput = True
     arcpy.CheckOutExtension("Spatial")  # We'll be using a bunch of spatial analysis tools
 
-    testing = False  # Runs a limited case if we don't want to spend hours of our life watching a progress bar
     if testing:
         arcpy.AddMessage("TESTING")
 
@@ -47,16 +48,22 @@ def main(dem,
         os.makedirs(outputFolder+"\\temporaryData")
     tempData = outputFolder + "\\temporaryData"
 
+    streamSR = arcpy.Describe(streamNetwork).spatialReference
+    demSR = arcpy.Describe(dem).spatialReference
+    precipSR = arcpy.Describe(precipMap).spatialReference
+    if streamSR.PCSName != demSR.PCSName != precipSR.PCSName != precipSR.PCSName:
+        arcpy.AddError("DEM AND STREAM NETWORK USE DIFFERENT PROJECTIONS")
+
     """Creates our output folder, where we'll put our final results"""
     if not os.path.exists(outputFolder+"\GrainSize"):
         os.makedirs(outputFolder+"\GrainSize")
     outputDataPath = outputFolder+"\GrainSize"
 
     """Clips our stream network to a HUC10 region"""
-    if huc10 != None:
+    if clippingRegion != None:
         clippedStreamNetwork = tempData + "\clippedStreamNetwork.shp"
         arcpy.AddMessage("Clipping stream network...")
-        arcpy.Clip_analysis(streamNetwork, huc10, clippedStreamNetwork)
+        arcpy.Clip_analysis(streamNetwork, clippingRegion, clippedStreamNetwork)
     else:
         clippedStreamNetwork = streamNetwork
 
@@ -65,7 +72,7 @@ def main(dem,
                              nValue, t_cValue)
 
     """Writes our output to a folder"""
-    writeOutput(reachArray, outputDataPath)
+    writeOutput(reachArray, outputDataPath, arcpy.Describe(streamNetwork).spatialReference)
 
     """Writes data to a text file. Delete in final build"""
     writeResults(reachArray, testing, outputDataPath)
@@ -353,7 +360,7 @@ def writeResults(reachArray, testing, outputData):
     inputDataFile.close()
 
 
-def writeOutput(reachArray, outputDataPath):
+def writeOutput(reachArray, outputDataPath, sr):
     arcpy.env.workspace = outputDataPath
     outputShape = outputDataPath + "\GrainSize.shp"
     tempLayer = outputDataPath + "\GrainSize_lyr"
@@ -366,7 +373,6 @@ def writeOutput(reachArray, outputDataPath):
         insertCursor.insertRow([reach.polyline, reach.grainSize])
     del insertCursor
 
-    sr = arcpy.SpatialReference("NAD 1983 UTM Zone 11N")
     arcpy.DefineProjection_management(outputShape, sr)
 
     arcpy.MakeFeatureLayer_management(outputShape, tempLayer)
