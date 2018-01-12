@@ -12,6 +12,7 @@ import arcpy
 import os
 from GrainSizeReach import Reach
 from math import sqrt
+from timeit import default_timer as timer
 
 
 def main(dem,
@@ -114,27 +115,65 @@ def makeReaches(testing, dem, flowAccumulation, streamNetwork, precipMap, region
 
     """If testing, only go through the loop once. Otherwise, go through every reach"""
     if testing:
-        for i in range(10):
-            arcpy.AddMessage("Creating Reach " + str(i+1) + " out of 10")
+        numTests = 500
+        slopeTime = 0.0
+        precipTime = 0.0
+        flowAccTime = 0.0
+        variableTime = 0.0
+        wrapUpTime = 0.0
+        start = timer()
+        for i in range(numTests):
+            arcpy.AddMessage("Creating Reach " + str(i + 1) + " out of " + str(numTests))
             row = polylineCursor.next()
+
             arcpy.AddMessage("Calculating Slope...")
+            tempStart = timer()
             lastPointElevation = findElevationAtPoint(dem, row[0].lastPoint, tempData)
             firstPointElevation = findElevationAtPoint(dem, row[0].firstPoint, tempData)
+            tempEnd = timer()
+            slopeTime += (tempEnd - tempStart)
+            arcpy.AddMessage("Time to calculate slope: " + str(tempEnd - tempStart) + " seconds")
+
             arcpy.AddMessage("Calculating Precipitation...")
+            tempStart = timer()
             precip = findPrecipitation(precipMap, tempData, row[0].lastPoint)
+            tempEnd = timer()
+            precipTime += (tempEnd - tempStart)
+            arcpy.AddMessage("Time to calculate precipitation: " + str(tempEnd - tempStart) + " seconds")
+
             arcpy.AddMessage("Calculating Flow Accumulation...")
+            tempStart = timer()
             flowAccAtPoint = findFlowAccumulation(flowAccumulation, tempData, cellSize)
+            tempEnd = timer()
+            flowAccTime += (tempEnd - tempStart)
+            arcpy.AddMessage("Time to calculate flow accumulation: " + str(tempEnd - tempStart) + " seconds")
 
             arcpy.AddMessage("Finding Variables...")
+            tempStart = timer()
             slope = findSlope(row, firstPointElevation, lastPointElevation)
             width = findWidth(flowAccAtPoint, precip)
             q_2 = findQ_2(flowAccAtPoint, firstPointElevation, precip, regionNumber, tempData)
+            tempEnd = timer()
+            variableTime += (tempEnd - tempStart)
+            arcpy.AddMessage("Time to calculate variables: " + str(tempEnd - tempStart) + " seconds")
 
+            tempStart = timer()
             reach = Reach(width, q_2, slope, row[0])
             reach.calculateGrainSize(nValue, t_cValue)
 
             reaches.append(reach)
-            arcpy.AddMessage("Reach " + str(i+1) + " complete.")
+            arcpy.AddMessage("Reach " + str(i + 1) + " complete.")
+            tempEnd = timer()
+            wrapUpTime += (tempEnd - tempStart)
+        end = timer()
+        totalTime = end - start
+
+        arcpy.AddMessage("Average time spent calculating slope: " + str(slopeTime / numTests) + " seconds")
+        arcpy.AddMessage("Average time spent calculating precipitation: " + str(precipTime / numTests) + " seconds")
+        arcpy.AddMessage("Average time spent calculating flow accumulation " + str(flowAccTime / numTests) + " seconds")
+        arcpy.AddMessage("Average time spent calculating variables: " + str(variableTime / numTests) + " seconds")
+        arcpy.AddMessage("Average time spent putting it together:" + str(wrapUpTime / numTests) + " seconds")
+        arcpy.AddMessage("Average time per reach: " + str(totalTime / numTests) + " seconds")
     else:
         i = 0
         for row in polylineCursor:
